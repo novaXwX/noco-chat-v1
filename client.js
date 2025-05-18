@@ -67,40 +67,55 @@ showRegisterBtn.onclick = (e) => {
     registerForm.classList.remove('hidden');
 };
 
-// --- Faux système d'inscription/connexion (local) ---
-registerForm.onsubmit = e => {
+// --- Inscription ---
+registerForm.onsubmit = async e => {
     e.preventDefault();
     const username = registerUsername.value.trim();
     const password = registerPassword.value.trim();
     if (!username || !password) return alert('Remplis tous les champs !');
     if (username.toLowerCase() === 'admin') return alert('Ce nom est réservé à l\'administrateur.');
-    localStorage.setItem('user_' + username, password);
-    alert('Compte créé ! Connecte-toi.');
-    showLoginBtn.click();
+    try {
+        const res = await fetch('/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert('Compte créé ! Connecte-toi.');
+            showLoginBtn.click();
+        } else {
+            alert(data.error || 'Erreur lors de la création du compte');
+        }
+    } catch (err) {
+        alert('Erreur réseau');
+    }
 };
-loginForm.onsubmit = e => {
+
+// --- Connexion ---
+loginForm.onsubmit = async e => {
     e.preventDefault();
     const username = loginUsername.value.trim();
     const password = loginPassword.value.trim();
     if (!username || !password) return alert('Remplis tous les champs !');
-    // Accès admin sans inscription
-    if (username === 'admin' && password === 'admin') {
-        currentUser = 'admin';
-        authScreen.classList.add('hidden');
-        mainApp.classList.remove('hidden');
-        renderContacts();
-        selectContact(contacts[0].id);
-        return;
-    }
-    const saved = localStorage.getItem('user_' + username);
-    if (saved && saved === password) {
-        currentUser = username;
-        authScreen.classList.add('hidden');
-        mainApp.classList.remove('hidden');
-        renderContacts();
-        selectContact(contacts[0].id);
-    } else {
-        alert('Identifiants incorrects !');
+    try {
+        const res = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (data.success) {
+            currentUser = username;
+            authScreen.classList.add('hidden');
+            mainApp.classList.remove('hidden');
+            renderContacts();
+            selectContact(contacts[0].id);
+        } else {
+            alert(data.error || 'Identifiants incorrects !');
+        }
+    } catch (err) {
+        alert('Erreur réseau');
     }
 };
 
