@@ -1,3 +1,4 @@
+HEAD
 # Application de Messagerie Simple
 
 Une application de messagerie web simple et sécurisée permettant la communication en temps réel entre utilisateurs.
@@ -70,3 +71,13 @@ Pour déployer l'application sur un serveur distant :
 ## Support
 
 Pour toute question ou problème, veuillez ouvrir une issue sur le dépôt GitHub. 
+
+# noco-chat-v1
+chat application
+git init
+git add .
+git commit -m "Add all project files"
+git branch -M main
+git remote add origin https://github.com/novaXwX/noco-chat-v1.git
+git push -u origin main
+ aec1bbfe88ff03d82c9a0829b14118162a066fdb
