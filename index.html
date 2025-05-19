@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Noco Chat</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
@@ -27,13 +25,7 @@
         <div id="chatContainer" class="chat-container" style="display: none;">
             <!-- Barre latérale des contacts -->
             <div class="contacts-sidebar">
-                <div class="user-profile">
-                    <img id="currentUserAvatar" src="" alt="Avatar" class="avatar">
-                    <button id="settingsButton" class="settings-button">
-                        <i class="fas fa-cog"></i>
-                    </button>
-                </div>
-                <div id="contacts" class="contacts-list">
+                <div class="contacts-list" id="contacts">
                     <!-- Les contacts seront ajoutés ici dynamiquement -->
                 </div>
             </div>
@@ -49,42 +41,13 @@
                 <form id="messageForm" class="message-form">
                     <input type="text" id="messageInput" placeholder="Écrivez votre message..." required>
                     <button type="submit">
-                        <i class="fas fa-paper-plane"></i>
+                        Envoyer
                     </button>
                 </form>
             </div>
         </div>
     </div>
-
-    <!-- Modal des paramètres -->
-    <div id="settingsModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Paramètres</h2>
-            <div class="settings-section">
-                <h3>Photo de profil</h3>
-                <input type="file" id="avatarInput" accept="image/*">
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de recadrage -->
-    <div id="cropModal" class="modal">
-        <div class="modal-content">
-            <h2>Recadrer l'image</h2>
-            <div class="cropper-container">
-                <img id="cropImage" src="" alt="Image à recadrer">
-            </div>
-            <div class="button-group">
-                <button id="cropButton">Valider</button>
-                <button id="cancelCropButton">Annuler</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Scripts -->
     <script src="/socket.io/socket.io.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
     <script src="client.js"></script>
 </body>
 </html> 
