@@ -1,9 +1,14 @@
 services:
   - type: web
-    name: chat-app
+    name: noco-chat
     env: node
     buildCommand: npm install
-    startCommand: node server.js
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    healthCheckPath: /
+    autoDeploy: true 
         value: production 
