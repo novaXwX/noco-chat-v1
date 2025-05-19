@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body>
+<body class="theme-dark">
     <div class="container">
         <!-- Formulaire de pseudo -->
         <div id="pseudoForm" class="login-form">
@@ -28,6 +28,7 @@
             <div class="contacts-sidebar">
                 <div class="contacts-header">
                     <h2><i class="fas fa-users"></i> En ligne</h2>
+                    <button id="settingsBtn" class="settings-btn" title="Paramètres"><i class="fas fa-cog"></i></button>
                 </div>
                 <div class="contacts-list" id="contacts">
                     <!-- Les contacts seront ajoutés ici dynamiquement -->
@@ -43,7 +44,7 @@
                     <!-- Les messages seront ajoutés ici dynamiquement -->
                 </div>
                 <form id="messageForm" class="message-form">
-                    <input type="text" id="messageInput" placeholder="Écrivez votre message..." required>
+                    <input type="text" id="messageInput" placeholder="Écrivez votre message..." required autocomplete="off">
                     <button type="submit">
                         <i class="fas fa-paper-plane"></i>
                     </button>
@@ -51,6 +52,19 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal paramètres -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeSettings">&times;</span>
+            <h2>Paramètres</h2>
+            <div class="settings-section">
+                <h3>Thème</h3>
+                <button id="toggleTheme" class="theme-toggle-btn"><i class="fas fa-moon"></i> Changer de thème</button>
+            </div>
+        </div>
+    </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="client.js"></script>
 </body>

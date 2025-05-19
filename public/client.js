@@ -11,6 +11,10 @@ const messageInput = document.getElementById('messageInput');
 const messagesList = document.getElementById('messages');
 const contactsList = document.getElementById('contacts');
 const chatTitle = document.getElementById('chatTitle');
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsModal = document.getElementById('settingsModal');
+const closeSettings = document.getElementById('closeSettings');
+const toggleTheme = document.getElementById('toggleTheme');
 
 // Connexion Socket.IO
 const socket = io();
@@ -104,4 +108,48 @@ socket.on('private_message', (data) => {
     if (data.from === selectedContact || data.from === currentUser) {
         addMessageToChat(data.from, data.text, data.from === currentUser);
     }
-}); 
+});
+
+// --- Gestion du thème ---
+function setTheme(theme) {
+    document.body.classList.remove('theme-dark', 'theme-light');
+    document.body.classList.add(theme);
+    localStorage.setItem('noco-theme', theme);
+    // Change l'icône de la roue
+    if (theme === 'theme-dark') {
+        toggleTheme.innerHTML = '<i class="fas fa-moon"></i> Thème clair';
+    } else {
+        toggleTheme.innerHTML = '<i class="fas fa-sun"></i> Thème sombre';
+    }
+}
+
+settingsBtn.onclick = () => {
+    settingsModal.style.display = 'flex';
+};
+closeSettings.onclick = () => {
+    settingsModal.style.display = 'none';
+};
+toggleTheme.onclick = () => {
+    if (document.body.classList.contains('theme-dark')) {
+        setTheme('theme-light');
+    } else {
+        setTheme('theme-dark');
+    }
+};
+
+// Fermer le modal si on clique en dehors
+window.onclick = (e) => {
+    if (e.target === settingsModal) {
+        settingsModal.style.display = 'none';
+    }
+};
+
+// Thème par défaut (sombre)
+(function () {
+    const saved = localStorage.getItem('noco-theme');
+    if (saved === 'theme-light' || saved === 'theme-dark') {
+        setTheme(saved);
+    } else {
+        setTheme('theme-dark');
+    }
+})(); 
