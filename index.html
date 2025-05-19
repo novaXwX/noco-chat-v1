@@ -5,18 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Noco Chat</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
         <!-- Formulaire de connexion -->
         <div id="loginForm" class="login-form">
-            <h1>Noco Chat</h1>
+            <h1><i class="fas fa-comments"></i> Noco Chat</h1>
             <form>
-                <input type="text" id="username" placeholder="Nom d'utilisateur" required>
-                <input type="password" id="password" placeholder="Mot de passe" required>
+                <div class="input-group">
+                    <input type="text" id="username" placeholder="Nom d'utilisateur" required>
+                    <input type="password" id="password" placeholder="Mot de passe" required>
+                </div>
                 <div class="button-group">
-                    <button type="submit" id="loginButton">Connexion</button>
-                    <button type="submit" id="registerButton">Inscription</button>
+                    <button type="submit" id="loginButton"><i class="fas fa-sign-in-alt"></i> Connexion</button>
+                    <button type="submit" id="registerButton"><i class="fas fa-user-plus"></i> Inscription</button>
                 </div>
             </form>
         </div>
@@ -25,6 +28,9 @@
         <div id="chatContainer" class="chat-container" style="display: none;">
             <!-- Barre latérale des contacts -->
             <div class="contacts-sidebar">
+                <div class="contacts-header">
+                    <h2><i class="fas fa-users"></i> En ligne</h2>
+                </div>
                 <div class="contacts-list" id="contacts">
                     <!-- Les contacts seront ajoutés ici dynamiquement -->
                 </div>
@@ -33,7 +39,7 @@
             <!-- Zone de chat principale -->
             <div class="chat-main">
                 <div class="chat-header">
-                    <h2>Sélectionnez un contact</h2>
+                    <h2><i class="fas fa-user"></i> <span id="chatTitle">Sélectionnez un contact</span></h2>
                 </div>
                 <div id="messages" class="messages">
                     <!-- Les messages seront ajoutés ici dynamiquement -->
@@ -41,7 +47,7 @@
                 <form id="messageForm" class="message-form">
                     <input type="text" id="messageInput" placeholder="Écrivez votre message..." required>
                     <button type="submit">
-                        Envoyer
+                        <i class="fas fa-paper-plane"></i>
                     </button>
                 </form>
             </div>
