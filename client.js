@@ -1,11 +1,8 @@
 // Configuration
 let currentUser = null;
 let selectedContact = null;
-let contacts = [
-    { id: 1, name: 'Bot', avatar: 'https://randomuser.me/api/portraits/lego/1.jpg', messages: [
-        { from: 'Bot', text: 'Bonjour ! Je suis ton assistant virtuel. Pose-moi une question ou commence à discuter !' }
-    ] }
-];
+let contacts = [];
+let userAvatar = null;
 
 // Éléments DOM
 const authScreen = document.getElementById('auth-screen');
@@ -29,6 +26,15 @@ const settingsBtn = document.getElementById('settings-btn');
 const settingsModal = document.getElementById('settings-modal');
 const toggleThemeBtn = document.getElementById('toggle-theme');
 const closeSettingsBtn = document.getElementById('close-settings');
+
+// Ajout des éléments pour la photo de profil
+const avatarInput = document.getElementById('avatar-input');
+const avatarPreview = document.getElementById('avatar-preview');
+const cropModal = document.getElementById('crop-modal');
+const cropImage = document.getElementById('crop-image');
+const cropButton = document.getElementById('crop-button');
+const cancelCropButton = document.getElementById('cancel-crop');
+let cropper = null;
 
 // Fonctions utilitaires
 function showNotification(message) {
@@ -109,8 +115,10 @@ loginForm.onsubmit = async e => {
             currentUser = username;
             authScreen.classList.add('hidden');
             mainApp.classList.remove('hidden');
-            renderContacts();
-            selectContact(contacts[0].id);
+            // Connexion au socket
+            socket.emit('user_connected', username);
+            // Récupération de la liste des utilisateurs connectés
+            socket.emit('get_connected_users');
         } else {
             alert(data.error || 'Identifiants incorrects !');
         }
@@ -122,21 +130,34 @@ loginForm.onsubmit = async e => {
 // --- Affichage des contacts ---
 function renderContacts(filter = '') {
     contactsList.innerHTML = '';
-    contacts.filter(c => c.name.toLowerCase().includes(filter.toLowerCase())).forEach(contact => {
-        const li = document.createElement('li');
-        li.className = (selectedContact && selectedContact.id === contact.id) ? 'selected' : '';
-        li.innerHTML = `<img src="${contact.avatar}" alt="avatar"><span>${contact.name}</span>`;
-        li.onclick = () => selectContact(contact.id);
-        contactsList.appendChild(li);
-    });
+    contacts
+        .filter(c => c.name.toLowerCase().includes(filter.toLowerCase()))
+        .forEach(contact => {
+            const li = document.createElement('li');
+            li.className = `contact-item ${(selectedContact && selectedContact.name === contact.name) ? 'selected' : ''}`;
+            li.innerHTML = `
+                <div class="flex items-center space-x-3 p-3 hover:bg-gray-700 rounded-lg cursor-pointer">
+                    <div class="relative">
+                        <img src="${contact.avatar}" alt="${contact.name}" class="w-10 h-10 rounded-full">
+                        <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-800"></span>
+                    </div>
+                    <div>
+                        <h3 class="text-white font-medium">${contact.name}</h3>
+                        <p class="text-gray-400 text-sm">En ligne</p>
+                    </div>
+                </div>
+            `;
+            li.onclick = () => selectContact(contact);
+            contactsList.appendChild(li);
+        });
 }
 searchContact.oninput = e => renderContacts(e.target.value);
 
 // --- Sélection d'un contact ---
-function selectContact(id) {
-    selectedContact = contacts.find(c => c.id === id);
-    chatUsername.textContent = selectedContact.name;
-    chatAvatar.src = selectedContact.avatar;
+function selectContact(contact) {
+    selectedContact = contact;
+    chatUsername.textContent = contact.name;
+    chatAvatar.src = contact.avatar;
     renderMessages();
     renderContacts(searchContact.value);
 }
@@ -154,32 +175,140 @@ function renderMessages() {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// --- Envoi de message et réponse du bot ---
+// --- Envoi de message ---
 chatForm.onsubmit = e => {
     e.preventDefault();
     const text = chatInput.value.trim();
     if (!text || !selectedContact) return;
+    
+    // Envoi du message via socket
+    socket.emit('private_message', {
+        to: selectedContact.name,
+        from: currentUser,
+        text: text
+    });
+    
+    // Ajout du message localement
     selectedContact.messages.push({ from: currentUser, text });
     renderMessages();
     chatInput.value = '';
-    setTimeout(() => botReply(text), 700);
 };
 
-function botReply(userMsg) {
-    // Réponses simples ou aléatoires
-    const lower = userMsg.toLowerCase();
-    let reply = "Je n'ai pas compris, peux-tu reformuler ?";
-    if (lower.includes('bonjour') || lower.includes('salut')) reply = 'Salut ! Comment puis-je t\'aider aujourd\'hui ?';
-    else if (lower.includes('ça va')) reply = 'Je vais très bien, merci ! Et toi ?';
-    else if (lower.includes('merci')) reply = 'Avec plaisir !';
-    else if (lower.includes('heure')) reply = `Il est ${new Date().toLocaleTimeString()}`;
-    else if (lower.includes('date')) reply = `Nous sommes le ${new Date().toLocaleDateString()}`;
-    else if (lower.includes('qui es-tu')) reply = "Je suis un bot de démonstration !";
-    else if (lower.includes('aide')) reply = "Je peux répondre à des questions simples ou discuter avec toi.";
-    else if (lower.includes('bye')) reply = "Au revoir ! Passe une bonne journée.";
-    selectedContact.messages.push({ from: 'Bot', text: reply });
-    renderMessages();
-}
+// --- Gestion de la photo de profil ---
+avatarInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                cropImage.src = e.target.result;
+                cropModal.classList.remove('hidden');
+                
+                // Initialise le recadrage
+                if (cropper) {
+                    cropper.destroy();
+                }
+                cropper = new Cropper(cropImage, {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                    dragMode: 'move',
+                    autoCropArea: 1,
+                    restore: false,
+                    guides: true,
+                    center: true,
+                    highlight: false,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    toggleDragModeOnDblclick: false,
+                });
+            };
+            reader.readAsDataURL(file);
+        } else {
+            alert('Veuillez sélectionner une image valide');
+        }
+    }
+});
+
+cropButton.addEventListener('click', () => {
+    if (cropper) {
+        const canvas = cropper.getCroppedCanvas({
+            width: 200,
+            height: 200
+        });
+        
+        // Convertit l'image recadrée en base64
+        const croppedImage = canvas.toDataURL('image/jpeg');
+        
+        // Met à jour l'avatar de l'utilisateur
+        userAvatar = croppedImage;
+        avatarPreview.src = croppedImage;
+        
+        // Envoie la nouvelle photo au serveur
+        socket.emit('update_avatar', {
+            username: currentUser,
+            avatar: croppedImage
+        });
+        
+        // Ferme le modal
+        cropModal.classList.add('hidden');
+        cropper.destroy();
+        cropper = null;
+    }
+});
+
+cancelCropButton.addEventListener('click', () => {
+    cropModal.classList.add('hidden');
+    if (cropper) {
+        cropper.destroy();
+        cropper = null;
+    }
+});
+
+// --- Gestion des sockets ---
+const socket = io();
+
+socket.on('user_connected', (username) => {
+    if (username !== currentUser) {
+        const newContact = {
+            name: username,
+            avatar: `https://ui-avatars.com/api/?name=${username}&background=random`,
+            messages: []
+        };
+        
+        // Vérifie si le contact existe déjà
+        const existingContact = contacts.find(c => c.name === username);
+        if (!existingContact) {
+            contacts.push(newContact);
+            renderContacts();
+            showNotification(`${username} s'est connecté`);
+        }
+    }
+});
+
+socket.on('user_disconnected', (username) => {
+    contacts = contacts.filter(c => c.name !== username);
+    renderContacts();
+    showNotification(`${username} s'est déconnecté`);
+});
+
+socket.on('connected_users', (users) => {
+    contacts = users
+        .filter(u => u !== currentUser)
+        .map(username => ({
+            name: username,
+            avatar: `https://ui-avatars.com/api/?name=${username}&background=random`,
+            messages: []
+        }));
+    renderContacts();
+});
+
+socket.on('avatar_updated', (data) => {
+    const contact = contacts.find(c => c.name === data.username);
+    if (contact) {
+        contact.avatar = data.avatar;
+        renderContacts();
+    }
+});
 
 // --- Paramètres (thème) ---
 settingsBtn.onclick = () => {

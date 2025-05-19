@@ -3,70 +3,179 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat App</title>
+    <title>NocoChat - Messagerie Instantanée</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body class="theme-dark">
-    <div id="auth-screen" class="flex items-center justify-center min-h-screen bg-gray-900">
-        <div class="bg-gray-800 rounded-lg shadow-lg p-8 w-full max-w-md">
+    <!-- Écran d'authentification -->
+    <div id="auth-screen" class="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
+        <div class="bg-gray-800 rounded-xl shadow-2xl p-8 w-full max-w-md backdrop-blur-sm bg-opacity-90">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-white mb-2">NocoChat</h1>
+                <p class="text-gray-400">Connectez-vous pour discuter</p>
+            </div>
             <div class="flex justify-center mb-6">
-                <button id="show-login" class="tab-btn text-white font-bold px-4 py-2 rounded-l bg-blue-600">Connexion</button>
-                <button id="show-register" class="tab-btn text-gray-300 font-bold px-4 py-2 rounded-r bg-gray-700">Créer un compte</button>
+                <button id="show-login" class="tab-btn text-white font-bold px-6 py-3 rounded-l-lg bg-blue-600 hover:bg-blue-700 transition-all">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Connexion
+                </button>
+                <button id="show-register" class="tab-btn text-gray-300 font-bold px-6 py-3 rounded-r-lg bg-gray-700 hover:bg-gray-600 transition-all">
+                    <i class="fas fa-user-plus mr-2"></i>Inscription
+                </button>
             </div>
             <form id="login-form" class="space-y-4">
-                <input type="text" id="login-username" class="w-full px-4 py-2 rounded bg-gray-700 text-white" placeholder="Pseudo" required>
-                <input type="password" id="login-password" class="w-full px-4 py-2 rounded bg-gray-700 text-white" placeholder="Mot de passe" required>
-                <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">Se connecter</button>
+                <div class="relative">
+                    <i class="fas fa-user absolute left-3 top-3 text-gray-400"></i>
+                    <input type="text" id="login-username" class="w-full pl-10 pr-4 py-3 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Pseudo" required>
+                </div>
+                <div class="relative">
+                    <i class="fas fa-lock absolute left-3 top-3 text-gray-400"></i>
+                    <input type="password" id="login-password" class="w-full pl-10 pr-4 py-3 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Mot de passe" required>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-all flex items-center justify-center">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Se connecter
+                </button>
             </form>
             <form id="register-form" class="space-y-4 hidden">
-                <input type="text" id="register-username" class="w-full px-4 py-2 rounded bg-gray-700 text-white" placeholder="Pseudo" required>
-                <input type="password" id="register-password" class="w-full px-4 py-2 rounded bg-gray-700 text-white" placeholder="Mot de passe" required>
-                <button type="submit" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">Créer un compte</button>
+                <div class="relative">
+                    <i class="fas fa-user absolute left-3 top-3 text-gray-400"></i>
+                    <input type="text" id="register-username" class="w-full pl-10 pr-4 py-3 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Pseudo" required>
+                </div>
+                <div class="relative">
+                    <i class="fas fa-lock absolute left-3 top-3 text-gray-400"></i>
+                    <input type="password" id="register-password" class="w-full pl-10 pr-4 py-3 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Mot de passe" required>
+                </div>
+                <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-all flex items-center justify-center">
+                    <i class="fas fa-user-plus mr-2"></i>Créer un compte
+                </button>
             </form>
         </div>
     </div>
-    <div id="main-app" class="hidden h-screen w-screen bg-gray-900">
+
+    <!-- Application principale -->
+    <div id="main-app" class="hidden h-screen w-screen bg-gradient-to-br from-gray-900 to-gray-800">
         <div class="flex h-full">
-            <!-- Sidebar contacts -->
-            <aside class="w-1/3 max-w-xs bg-gray-800 flex flex-col relative">
+            <!-- Barre latérale -->
+            <aside class="w-1/3 max-w-xs bg-gray-800 flex flex-col relative border-r border-gray-700">
                 <div class="p-4 border-b border-gray-700">
-                    <input type="text" id="search-contact" class="w-full px-3 py-2 rounded bg-gray-700 text-white" placeholder="Rechercher...">
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        <input type="text" id="search-contact" class="w-full pl-10 pr-4 py-2 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Rechercher...">
+                    </div>
                 </div>
                 <ul id="contacts-list" class="flex-1 overflow-y-auto">
                     <!-- Contacts dynamiques -->
                 </ul>
-                <div class="absolute bottom-0 left-0 w-full flex items-center p-4 border-t border-gray-700">
-                    <button id="settings-btn" class="flex items-center gap-2 text-gray-300 hover:text-white">
-                        <span class="text-2xl">⚙️</span> <span>Paramètres</span>
+                <div class="absolute bottom-0 left-0 w-full flex items-center p-4 border-t border-gray-700 bg-gray-800">
+                    <button id="settings-btn" class="flex items-center gap-2 text-gray-300 hover:text-white transition-colors">
+                        <i class="fas fa-cog text-xl"></i>
+                        <span>Paramètres</span>
                     </button>
                 </div>
             </aside>
-            <!-- Chat window -->
+
+            <!-- Zone de chat -->
             <section class="flex-1 flex flex-col bg-gray-900">
-                <div class="p-4 border-b border-gray-700 flex items-center gap-4">
-                    <img id="chat-avatar" src="" alt="avatar" class="w-10 h-10 rounded-full bg-gray-700" />
-                    <span id="chat-username" class="text-white font-bold text-lg"></span>
+                <div class="p-4 border-b border-gray-700 flex items-center gap-4 bg-gray-800">
+                    <img id="chat-avatar" src="" alt="avatar" class="w-12 h-12 rounded-full object-cover border-2 border-blue-500" />
+                    <div>
+                        <span id="chat-username" class="text-white font-bold text-lg"></span>
+                        <span class="text-green-500 text-sm block">En ligne</span>
+                    </div>
                 </div>
-                <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-900">
+                <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4">
                     <!-- Messages dynamiques -->
                 </div>
-                <form id="chat-form" class="p-4 border-t border-gray-700 flex gap-2">
-                    <input type="text" id="chat-input" class="flex-1 px-4 py-2 rounded bg-gray-800 text-white" placeholder="Écrivez un message..." autocomplete="off">
-                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition">Envoyer</button>
+                <form id="chat-form" class="p-4 border-t border-gray-700 flex gap-2 bg-gray-800">
+                    <div class="flex-1 relative">
+                        <input type="text" id="chat-input" class="w-full px-4 py-3 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Écrivez un message..." autocomplete="off">
+                        <button type="button" class="absolute right-3 top-3 text-gray-400 hover:text-white">
+                            <i class="fas fa-smile text-xl"></i>
+                        </button>
+                    </div>
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-all flex items-center">
+                        <i class="fas fa-paper-plane mr-2"></i>Envoyer
+                    </button>
                 </form>
             </section>
         </div>
-        <!-- Modal paramètres -->
-        <div id="settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-gray-800 p-8 rounded-lg shadow-lg w-80 flex flex-col items-center">
-                <h3 class="text-white text-xl mb-4">Paramètres</h3>
-                <button id="toggle-theme" class="mb-4 px-4 py-2 rounded bg-gray-700 text-white hover:bg-gray-600">Changer le thème</button>
-                <button id="close-settings" class="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700">Fermer</button>
+
+        <!-- Modal des paramètres -->
+        <div id="settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
+            <div class="bg-gray-800 p-6 rounded-xl w-96 shadow-2xl">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-white">Paramètres</h2>
+                    <button id="close-settings" class="text-gray-400 hover:text-white">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <!-- Photo de profil -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-white mb-2">Photo de profil</h3>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <img id="avatar-preview" src="" alt="Avatar" class="w-24 h-24 rounded-full object-cover border-2 border-blue-500">
+                            <div class="absolute bottom-0 right-0 bg-blue-500 rounded-full p-1">
+                                <i class="fas fa-camera text-white text-sm"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <input type="file" id="avatar-input" accept="image/*" class="hidden">
+                            <button onclick="document.getElementById('avatar-input').click()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all flex items-center">
+                                <i class="fas fa-upload mr-2"></i>Changer la photo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thème -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-white mb-2">Thème</h3>
+                    <button id="toggle-theme" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all flex items-center">
+                        <i class="fas fa-moon mr-2"></i>Changer de thème
+                    </button>
+                </div>
+
+                <!-- Notifications -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-white mb-2">Notifications</h3>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-300">Activer les notifications</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="sr-only peer" id="notifications-toggle">
+                            <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de recadrage -->
+        <div id="crop-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 backdrop-blur-sm">
+            <div class="bg-gray-800 p-6 rounded-xl w-[600px] shadow-2xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-white">Recadrer la photo</h2>
+                    <button id="cancel-crop" class="text-gray-400 hover:text-white">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="mb-4">
+                    <img id="crop-image" src="" alt="Image à recadrer" class="max-h-[400px] w-full object-contain">
+                </div>
+                <div class="flex justify-end space-x-4">
+                    <button id="crop-button" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-all flex items-center">
+                        <i class="fas fa-crop mr-2"></i>Recadrer
+                    </button>
+                </div>
             </div>
         </div>
     </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
     <script src="app.js"></script>
     <script src="client.js"></script>
 </body>
