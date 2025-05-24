@@ -209,49 +209,13 @@ window.addEventListener('drop', (e) => {
     }
 });
 
-// Fonction d'upload de fichier
+// Fonction d'upload de fichier (désactivée)
 function handleFileUpload(file) {
-    if (!selectedContact) return alert('Sélectionnez un contact avant d'envoyer un fichier.');
-    const formData = new FormData();
-    formData.append('file', file);
-    fetch('/upload', {
-        method: 'POST',
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.url) {
-            // Envoie le lien du fichier comme message
-            socket.emit('private_message', {
-                from: currentUser,
-                to: selectedContact,
-                file: {
-                    url: data.url,
-                    originalname: data.originalname,
-                    mimetype: data.mimetype
-                }
-            });
-            addFileToChat(currentUser, data, true);
-        }
-    })
-    .catch(() => alert(`Erreur lors de l'upload du fichier.`));
+    alert("L'envoi de fichiers est désactivé pour le moment.");
+    return;
 }
 
-// Affichage d'un fichier dans le chat
+// Affichage d'un fichier dans le chat (désactivé)
 function addFileToChat(sender, fileData, isOutgoing = false) {
-    const messageElement = document.createElement('div');
-    messageElement.className = `message ${isOutgoing ? 'outgoing' : 'incoming'}`;
-    let content = `<div class="message-content">`;
-    content += `<span class="message-sender">${sender}</span>`;
-    if (fileData.mimetype.startsWith('image/')) {
-        content += `<img src="${fileData.url}" alt="${fileData.originalname}" style="max-width:180px;max-height:120px;border-radius:8px;margin:8px 0;cursor:pointer;" onclick="window.open('${fileData.url}','_blank')">`;
-    } else if (fileData.mimetype.startsWith('video/')) {
-        content += `<video src="${fileData.url}" controls style="max-width:180px;max-height:120px;border-radius:8px;margin:8px 0;"></video>`;
-    } else {
-        content += `<a href="${fileData.url}" download style="color:var(--primary-color);text-decoration:underline;">${fileData.originalname}</a>`;
-    }
-    content += `<span class="message-time">${new Date().toLocaleTimeString()}</span></div>`;
-    messageElement.innerHTML = content;
-    messagesList.appendChild(messageElement);
-    messagesList.scrollTop = messagesList.scrollHeight;
+    // Ne rien faire
 } 
