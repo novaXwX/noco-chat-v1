@@ -20,6 +20,8 @@ const toggleTheme = document.getElementById('toggleTheme');
 const searchInput = document.getElementById('searchContacts');
 const dropZone = document.getElementById('dropZone');
 const chatHeader = document.querySelector('.chat-header');
+const emojiBtn = document.getElementById('emojiBtn');
+const emojiPicker = document.getElementById('emojiPicker');
 
 // Connexion Socket.IO
 const socket = io();
@@ -368,4 +370,26 @@ socket.on('stop_typing', (data) => {
     if (data.from === selectedContact) {
         hideTypingIndicator();
     }
-}); 
+});
+
+// --- Emoji Button (nouveau sélecteur d'emojis) ---
+if (window.EmojiButton) {
+    const picker = new EmojiButton({
+        position: 'top-start',
+        zIndex: 2000,
+        autoHide: false,
+        theme: document.body.classList.contains('theme-dark') ? 'dark' : 'light',
+    });
+    emojiBtn.addEventListener('click', (e) => {
+        picker.togglePicker(emojiBtn);
+    });
+    picker.on('emoji', emoji => {
+        const input = messageInput;
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const text = input.value;
+        input.value = text.slice(0, start) + emoji + text.slice(end);
+        input.focus();
+        input.selectionStart = input.selectionEnd = start + emoji.length;
+    });
+} 
