@@ -380,11 +380,16 @@ if (window.EmojiButton) {
         autoHide: false,
         theme: document.body.classList.contains('theme-dark') ? 'dark' : 'light',
     });
-    emojiBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        messageInput.focus();
-        // Affiche une info-bulle pour rappeler le raccourci
-        emojiBtn.title = 'Astuce : utilise Windows + . pour ouvrir les emojis !';
+    document.addEventListener('DOMContentLoaded', () => {
+        const emojiBtn = document.getElementById('emojiBtn');
+        const messageInput = document.getElementById('messageInput');
+        if (emojiBtn && messageInput) {
+            emojiBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                messageInput.focus();
+                emojiBtn.title = 'Astuce : utilise Windows + . pour ouvrir les emojis !';
+            });
+        }
     });
     picker.on('emoji', emoji => {
         console.log('Emoji choisi :', emoji);
