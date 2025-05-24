@@ -259,10 +259,14 @@ function hideTypingIndicator() {
     if (typingChatElem) typingChatElem.remove();
 }
 
-// Émission du signal "en train d'écrire"
+// Émission du signal "en train d'écrire" ou "arrêt d'écriture"
 messageInput.addEventListener('input', () => {
-    if (selectedContact && messageInput.value.length > 0) {
-        socket.emit('typing', { from: currentUser, to: selectedContact });
+    if (selectedContact) {
+        if (messageInput.value.length > 0) {
+            socket.emit('typing', { from: currentUser, to: selectedContact });
+        } else {
+            socket.emit('stop_typing', { from: currentUser, to: selectedContact });
+        }
     }
 });
 
@@ -270,5 +274,12 @@ messageInput.addEventListener('input', () => {
 socket.on('typing', (data) => {
     if (data.from === selectedContact) {
         showTypingIndicator(data.from);
+    }
+});
+
+// Réception du signal "arrêt d'écriture"
+socket.on('stop_typing', (data) => {
+    if (data.from === selectedContact) {
+        hideTypingIndicator();
     }
 }); 

@@ -109,6 +109,17 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Gestion du signal "arrêt d'écriture"
+    socket.on('stop_typing', (data) => {
+        const targetSocketId = Array.from(connectedUsers.entries())
+            .find(([_, username]) => username === data.to)?.[0];
+        if (targetSocketId) {
+            io.to(targetSocketId).emit('stop_typing', {
+                from: data.from
+            });
+        }
+    });
+
     socket.on('disconnect', () => {
         const username = connectedUsers.get(socket.id);
         if (username) {
