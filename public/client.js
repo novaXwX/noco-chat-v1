@@ -73,15 +73,90 @@ searchInput.addEventListener('input', (e) => {
 function addMessageToChat(sender, text, isOutgoing = false) {
     const messageElement = document.createElement('div');
     messageElement.className = `message ${isOutgoing ? 'outgoing' : 'incoming'}`;
+    // Ajout d'un id unique pour chaque message
+    const messageId = 'msg-' + Date.now() + '-' + Math.floor(Math.random()*10000);
+    messageElement.id = messageId;
+    let menuBtn = `<span class="message-menu-btn" style="float:right;cursor:pointer;font-size:1.2em;margin-left:8px;">&#8942;</span>`;
     messageElement.innerHTML = `
         <div class="message-content">
             <span class="message-sender">${sender}</span>
+            <span style="display:inline-block;width:8px;"></span>
+            ${menuBtn}
             <p>${text}</p>
             <span class="message-time">${new Date().toLocaleTimeString()}</span>
         </div>
     `;
     messagesList.appendChild(messageElement);
     messagesList.scrollTop = messagesList.scrollHeight;
+
+    // Gestion du menu de suppression
+    const btn = messageElement.querySelector('.message-menu-btn');
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showDeleteMenu(messageElement, isOutgoing);
+    });
+}
+
+// Menu suppression façon WhatsApp
+function showDeleteMenu(messageElement, isOutgoing) {
+    // Supprime un éventuel menu déjà ouvert
+    const oldMenu = document.getElementById('delete-menu');
+    if (oldMenu) oldMenu.remove();
+    // Création du menu
+    const menu = document.createElement('div');
+    menu.id = 'delete-menu';
+    menu.style.position = 'absolute';
+    menu.style.background = 'var(--bg-sidebar)';
+    menu.style.color = 'var(--text-main)';
+    menu.style.border = '1px solid var(--border)';
+    menu.style.borderRadius = '8px';
+    menu.style.boxShadow = '0 2px 8px rgba(44,62,80,0.10)';
+    menu.style.padding = '8px 0';
+    menu.style.zIndex = 1000;
+    menu.style.right = '30px';
+    menu.style.top = '30px';
+    menu.style.minWidth = '160px';
+    menu.style.textAlign = 'left';
+    // Option supprimer pour moi
+    const delForMe = document.createElement('div');
+    delForMe.textContent = 'Supprimer pour moi';
+    delForMe.style.padding = '8px 16px';
+    delForMe.style.cursor = 'pointer';
+    delForMe.onmouseover = () => delForMe.style.background = 'var(--contact-hover)';
+    delForMe.onmouseout = () => delForMe.style.background = 'none';
+    delForMe.onclick = () => {
+        messageElement.remove();
+        menu.remove();
+    };
+    menu.appendChild(delForMe);
+    // Option supprimer pour tout le monde (si c'est mon message)
+    if (isOutgoing) {
+        const delForAll = document.createElement('div');
+        delForAll.textContent = 'Supprimer pour tout le monde';
+        delForAll.style.padding = '8px 16px';
+        delForAll.style.cursor = 'pointer';
+        delForAll.onmouseover = () => delForAll.style.background = 'var(--contact-hover)';
+        delForAll.onmouseout = () => delForAll.style.background = 'none';
+        delForAll.onclick = () => {
+            messageElement.remove();
+            menu.remove();
+            // Ici on pourra ajouter la logique serveur plus tard
+            alert('Suppression pour tout le monde à venir !');
+        };
+        menu.appendChild(delForAll);
+    }
+    // Fermer le menu si on clique ailleurs
+    document.body.appendChild(menu);
+    const rect = messageElement.getBoundingClientRect();
+    menu.style.left = (rect.right - 180) + 'px';
+    menu.style.top = (rect.top + 20 + window.scrollY) + 'px';
+    function closeMenu(e) {
+        if (!menu.contains(e.target)) {
+            menu.remove();
+            document.removeEventListener('mousedown', closeMenu);
+        }
+    }
+    setTimeout(() => document.addEventListener('mousedown', closeMenu), 10);
 }
 
 // Envoi de message
