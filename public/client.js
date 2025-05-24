@@ -73,18 +73,18 @@ searchInput.addEventListener('input', (e) => {
 function addMessageToChat(sender, text, isOutgoing = false) {
     const messageElement = document.createElement('div');
     messageElement.className = `message ${isOutgoing ? 'outgoing' : 'incoming'}`;
-    // Ajout d'un id unique pour chaque message
     const messageId = 'msg-' + Date.now() + '-' + Math.floor(Math.random()*10000);
     messageElement.id = messageId;
-    let menuBtn = `<span class="message-menu-btn" style="float:right;cursor:pointer;font-size:1.2em;margin-left:8px;">&#8942;</span>`;
+    // Structure flex pour aligner texte et menu
     messageElement.innerHTML = `
-        <div class="message-content">
-            <span class="message-sender">${sender}</span>
-            <span style="display:inline-block;width:8px;"></span>
-            ${menuBtn}
-            <p>${text}</p>
-            <span class="message-time">${new Date().toLocaleTimeString()}</span>
+        <div class="message-content-row" style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="flex:1;min-width:0;">
+                <span class="message-sender">${sender}</span>
+                <p style="margin:4px 0 0 0;word-break:break-word;">${text}</p>
+            </div>
+            <span class="message-menu-btn" style="cursor:pointer;font-size:1.2em;margin-left:12px;">&#8942;</span>
         </div>
+        <span class="message-time" style="display:block;text-align:right;margin-top:2px;opacity:0.7;">${new Date().toLocaleTimeString()}</span>
     `;
     messagesList.appendChild(messageElement);
     messagesList.scrollTop = messagesList.scrollHeight;
