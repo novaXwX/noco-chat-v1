@@ -3,6 +3,7 @@ let currentUser = null;
 let selectedContact = null;
 let contacts = [];
 let unreadMessages = new Set();
+let fileToUpload = null;
 
 // Éléments DOM
 const pseudoForm = document.getElementById('pseudoForm');
@@ -119,7 +120,9 @@ socket.on('connected_users', (users) => {
 });
 
 socket.on('private_message', (data) => {
-    if (data.from === selectedContact || data.from === currentUser) {
+    if (data.file) {
+        addFileToChat(data.from, data.file, data.from === currentUser);
+    } else if (data.from === selectedContact || data.from === currentUser) {
         addMessageToChat(data.from, data.text, data.from === currentUser);
     } else {
         unreadMessages.add(data.from);
@@ -171,7 +174,7 @@ window.onclick = (e) => {
     }
 })();
 
-// --- Drag & Drop fichiers (affichage zone drop) ---
+// --- Drag & Drop fichiers (affichage zone drop + upload) ---
 let dragCounter = 0;
 window.addEventListener('dragenter', (e) => {
     e.preventDefault();
@@ -201,5 +204,54 @@ window.addEventListener('drop', (e) => {
         dropZone.classList.remove('active');
         setTimeout(() => dropZone.style.display = 'none', 200);
     }
-    // Ici on pourra gérer l'upload plus tard
-}); 
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleFileUpload(e.dataTransfer.files[0]);
+    }
+});
+
+// Fonction d'upload de fichier
+function handleFileUpload(file) {
+    if (!selectedContact) return alert('Sélectionnez un contact avant d'envoyer un fichier.');
+    const formData = new FormData();
+    formData.append('file', file);
+    fetch('/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.url) {
+            // Envoie le lien du fichier comme message
+            socket.emit('private_message', {
+                from: currentUser,
+                to: selectedContact,
+                file: {
+                    url: data.url,
+                    originalname: data.originalname,
+                    mimetype: data.mimetype
+                }
+            });
+            addFileToChat(currentUser, data, true);
+        }
+    })
+    .catch(() => alert('Erreur lors de l'upload du fichier.'));
+}
+
+// Affichage d'un fichier dans le chat
+function addFileToChat(sender, fileData, isOutgoing = false) {
+    const messageElement = document.createElement('div');
+    messageElement.className = `message ${isOutgoing ? 'outgoing' : 'incoming'}`;
+    let content = `<div class="message-content">`;
+    content += `<span class="message-sender">${sender}</span>`;
+    if (fileData.mimetype.startsWith('image/')) {
+        content += `<img src="${fileData.url}" alt="${fileData.originalname}" style="max-width:180px;max-height:120px;border-radius:8px;margin:8px 0;cursor:pointer;" onclick="window.open('${fileData.url}','_blank')">`;
+    } else if (fileData.mimetype.startsWith('video/')) {
+        content += `<video src="${fileData.url}" controls style="max-width:180px;max-height:120px;border-radius:8px;margin:8px 0;"></video>`;
+    } else {
+        content += `<a href="${fileData.url}" download style="color:var(--primary-color);text-decoration:underline;">${fileData.originalname}</a>`;
+    }
+    content += `<span class="message-time">${new Date().toLocaleTimeString()}</span></div>`;
+    messageElement.innerHTML = content;
+    messagesList.appendChild(messageElement);
+    messagesList.scrollTop = messagesList.scrollHeight;
+} 

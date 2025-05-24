@@ -2,10 +2,25 @@ const express = require('express');
 const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
+const multer = require('multer');
+const path = require('path');
 
 // Sert les fichiers statiques (index.html, client.js, styles.css, etc.)
 app.use(express.static(__dirname));
 app.use(express.json()); // Pour lire le JSON dans les requêtes
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Configuration de multer pour l'upload
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, path.join(__dirname, 'uploads'));
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + '-' + file.originalname);
+    }
+});
+const upload = multer({ storage: storage });
 
 // Stockage en mémoire des utilisateurs
 const users = {}; // { username: { password: string, avatar: string } }
@@ -90,6 +105,17 @@ io.on('connection', (socket) => {
             io.emit('user_disconnected', username);
             console.log(`${username} déconnecté. Total utilisateurs: ${connectedUsers.size}`);
         }
+    });
+});
+
+// Route d'upload de fichiers (POST /upload)
+app.post('/upload', upload.single('file'), (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu' });
+    res.json({
+        url: `/uploads/${req.file.filename}`,
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: req.file.size
     });
 });
 
