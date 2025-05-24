@@ -157,6 +157,24 @@ body {
 .settings-btn:hover {
     color: var(--text-main);
 }
+.search-container {
+    padding: 10px 20px;
+    border-bottom: 1.5px solid var(--border);
+}
+.search-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    font-size: 0.95rem;
+    background: var(--bg-input);
+    color: var(--text-main);
+    transition: border 0.2s;
+}
+.search-input:focus {
+    border: 1.5px solid var(--primary-color);
+    outline: none;
+}
 .contacts-list {
     flex: 1;
     overflow-y: auto;
@@ -172,6 +190,7 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
+    position: relative;
 }
 .contact.selected, .contact:hover {
     background: var(--contact-hover);
@@ -183,6 +202,22 @@ body {
 .contact-name {
     font-weight: 500;
     color: var(--text-main);
+}
+
+.notification-badge {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    background-color: var(--primary-color);
+    border-radius: 50%;
+    display: none;
+}
+
+.notification-badge.active {
+    display: block;
 }
 
 .chat-main {

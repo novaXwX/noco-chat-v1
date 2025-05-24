@@ -2,6 +2,7 @@
 let currentUser = null;
 let selectedContact = null;
 let contacts = [];
+let unreadMessages = new Set();
 
 // Éléments DOM
 const pseudoForm = document.getElementById('pseudoForm');
@@ -15,6 +16,7 @@ const settingsBtn = document.getElementById('settingsBtn');
 const settingsModal = document.getElementById('settingsModal');
 const closeSettings = document.getElementById('closeSettings');
 const toggleTheme = document.getElementById('toggleTheme');
+const searchInput = document.getElementById('searchContacts');
 
 // Connexion Socket.IO
 const socket = io();
@@ -31,15 +33,20 @@ pseudoForm.addEventListener('submit', (e) => {
 });
 
 // Affichage des contacts
-function renderContacts() {
+function renderContacts(searchTerm = '') {
     contactsList.innerHTML = '';
-    contacts.forEach(contact => {
+    const filteredContacts = contacts.filter(contact => 
+        contact.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    filteredContacts.forEach(contact => {
         const contactElement = document.createElement('div');
         contactElement.className = `contact ${contact === selectedContact ? 'selected' : ''}`;
         contactElement.innerHTML = `
             <div class="contact-info">
                 <span class="contact-name">${contact}</span>
             </div>
+            <div class="notification-badge ${unreadMessages.has(contact) ? 'active' : ''}"></div>
         `;
         contactElement.addEventListener('click', () => selectContact(contact));
         contactsList.appendChild(contactElement);
@@ -49,9 +56,15 @@ function renderContacts() {
 function selectContact(contact) {
     selectedContact = contact;
     chatTitle.textContent = contact;
-    renderContacts();
+    unreadMessages.delete(contact);
+    renderContacts(searchInput.value);
     messagesList.innerHTML = '';
 }
+
+// Recherche de contacts
+searchInput.addEventListener('input', (e) => {
+    renderContacts(e.target.value);
+});
 
 // Affichage des messages
 function addMessageToChat(sender, text, isOutgoing = false) {
@@ -107,6 +120,9 @@ socket.on('connected_users', (users) => {
 socket.on('private_message', (data) => {
     if (data.from === selectedContact || data.from === currentUser) {
         addMessageToChat(data.from, data.text, data.from === currentUser);
+    } else {
+        unreadMessages.add(data.from);
+        renderContacts(searchInput.value);
     }
 });
 
