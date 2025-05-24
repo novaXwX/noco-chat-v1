@@ -19,6 +19,7 @@ const closeSettings = document.getElementById('closeSettings');
 const toggleTheme = document.getElementById('toggleTheme');
 const searchInput = document.getElementById('searchContacts');
 const dropZone = document.getElementById('dropZone');
+const chatHeader = document.querySelector('.chat-header');
 
 // Connexion Socket.IO
 const socket = io();
@@ -218,4 +219,56 @@ function handleFileUpload(file) {
 // Affichage d'un fichier dans le chat (désactivé)
 function addFileToChat(sender, fileData, isOutgoing = false) {
     // Ne rien faire
-} 
+}
+
+// Ajout de l'affichage "en train d'écrire..." sous le nom du contact et dans la zone de chat
+function showTypingIndicator(sender) {
+    // Sous le nom du contact
+    let typingElem = document.getElementById('typing-indicator-header');
+    if (!typingElem) {
+        typingElem = document.createElement('div');
+        typingElem.id = 'typing-indicator-header';
+        typingElem.style.fontSize = '0.95rem';
+        typingElem.style.color = 'var(--primary-color)';
+        typingElem.style.marginTop = '2px';
+        chatHeader.appendChild(typingElem);
+    }
+    typingElem.textContent = `${sender} est en train d'écrire...`;
+
+    // Dans la zone de chat
+    let typingChatElem = document.getElementById('typing-indicator-chat');
+    if (!typingChatElem) {
+        typingChatElem = document.createElement('div');
+        typingChatElem.id = 'typing-indicator-chat';
+        typingChatElem.style.fontSize = '1rem';
+        typingChatElem.style.color = 'var(--primary-color)';
+        typingChatElem.style.margin = '8px 0 0 12px';
+        messagesList.appendChild(typingChatElem);
+    }
+    typingChatElem.textContent = `${sender} écrit...`;
+
+    // Masquer après 2 secondes sans nouveau signal
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(hideTypingIndicator, 2000);
+}
+
+function hideTypingIndicator() {
+    const typingElem = document.getElementById('typing-indicator-header');
+    if (typingElem) typingElem.remove();
+    const typingChatElem = document.getElementById('typing-indicator-chat');
+    if (typingChatElem) typingChatElem.remove();
+}
+
+// Émission du signal "en train d'écrire"
+messageInput.addEventListener('input', () => {
+    if (selectedContact && messageInput.value.length > 0) {
+        socket.emit('typing', { from: currentUser, to: selectedContact });
+    }
+});
+
+// Réception du signal "en train d'écrire"
+socket.on('typing', (data) => {
+    if (data.from === selectedContact) {
+        showTypingIndicator(data.from);
+    }
+}); 

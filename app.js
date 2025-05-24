@@ -98,6 +98,17 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Gestion du signal "en train d'écrire"
+    socket.on('typing', (data) => {
+        const targetSocketId = Array.from(connectedUsers.entries())
+            .find(([_, username]) => username === data.to)?.[0];
+        if (targetSocketId) {
+            io.to(targetSocketId).emit('typing', {
+                from: data.from
+            });
+        }
+    });
+
     socket.on('disconnect', () => {
         const username = connectedUsers.get(socket.id);
         if (username) {
