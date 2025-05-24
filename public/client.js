@@ -17,6 +17,7 @@ const settingsModal = document.getElementById('settingsModal');
 const closeSettings = document.getElementById('closeSettings');
 const toggleTheme = document.getElementById('toggleTheme');
 const searchInput = document.getElementById('searchContacts');
+const dropZone = document.getElementById('dropZone');
 
 // Connexion Socket.IO
 const socket = io();
@@ -168,4 +169,37 @@ window.onclick = (e) => {
     } else {
         setTheme('theme-dark');
     }
-})(); 
+})();
+
+// --- Drag & Drop fichiers (affichage zone drop) ---
+let dragCounter = 0;
+window.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    dragCounter++;
+    if (dropZone) {
+        dropZone.style.display = 'flex';
+        setTimeout(() => dropZone.classList.add('active'), 10);
+    }
+});
+window.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    dragCounter--;
+    if (dragCounter <= 0 && dropZone) {
+        dropZone.classList.remove('active');
+        setTimeout(() => dropZone.style.display = 'none', 200);
+        dragCounter = 0;
+    }
+});
+window.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    if (dropZone) dropZone.classList.add('active');
+});
+window.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dragCounter = 0;
+    if (dropZone) {
+        dropZone.classList.remove('active');
+        setTimeout(() => dropZone.style.display = 'none', 200);
+    }
+    // Ici on pourra gérer l'upload plus tard
+}); 
