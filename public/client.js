@@ -381,7 +381,10 @@ if (window.EmojiButton) {
         theme: document.body.classList.contains('theme-dark') ? 'dark' : 'light',
     });
     emojiBtn.addEventListener('click', (e) => {
-        picker.togglePicker(emojiBtn);
+        e.preventDefault();
+        messageInput.focus();
+        // Affiche une info-bulle pour rappeler le raccourci
+        emojiBtn.title = 'Astuce : utilise Windows + . pour ouvrir les emojis !';
     });
     picker.on('emoji', emoji => {
         console.log('Emoji choisi :', emoji);
