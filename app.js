@@ -120,6 +120,21 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Suppression d'un message pour tout le monde
+    socket.on('delete_message', (data) => {
+        // On relaie à tous les clients concernés (expéditeur et destinataire)
+        const { messageId, to, from } = data;
+        // Trouver le socket du destinataire
+        const targetSocketId = Array.from(connectedUsers.entries())
+            .find(([_, username]) => username === to)?.[0];
+        // Supprimer chez l'expéditeur
+        socket.emit('delete_message', { messageId });
+        // Supprimer chez le destinataire
+        if (targetSocketId) {
+            io.to(targetSocketId).emit('delete_message', { messageId });
+        }
+    });
+
     socket.on('disconnect', () => {
         const username = connectedUsers.get(socket.id);
         if (username) {
