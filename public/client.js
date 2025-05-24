@@ -75,14 +75,15 @@ function addMessageToChat(sender, text, isOutgoing = false) {
     messageElement.className = `message ${isOutgoing ? 'outgoing' : 'incoming'}`;
     const messageId = 'msg-' + Date.now() + '-' + Math.floor(Math.random()*10000);
     messageElement.id = messageId;
-    // Structure flex pour aligner texte et menu
     messageElement.innerHTML = `
-        <div class="message-content-row" style="display:flex;align-items:center;justify-content:space-between;">
+        <div class="message-content-row" style="display:flex;align-items:flex-start;justify-content:space-between;">
             <div style="flex:1;min-width:0;">
-                <span class="message-sender">${sender}</span>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span class="message-sender" style="font-size:1rem;">${sender}</span>
+                    <span class="message-menu-btn" style="cursor:pointer;font-size:1rem;line-height:1;">&#8942;</span>
+                </div>
                 <p style="margin:4px 0 0 0;word-break:break-word;">${text}</p>
             </div>
-            <span class="message-menu-btn" style="cursor:pointer;font-size:1.2em;margin-left:12px;">&#8942;</span>
         </div>
         <span class="message-time" style="display:block;text-align:right;margin-top:2px;opacity:0.7;">${new Date().toLocaleTimeString()}</span>
     `;
@@ -93,12 +94,12 @@ function addMessageToChat(sender, text, isOutgoing = false) {
     const btn = messageElement.querySelector('.message-menu-btn');
     btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        showDeleteMenu(messageElement, isOutgoing);
+        showDeleteMenu(messageElement, isOutgoing, messageId);
     });
 }
 
 // Menu suppression façon WhatsApp
-function showDeleteMenu(messageElement, isOutgoing) {
+function showDeleteMenu(messageElement, isOutgoing, messageId) {
     // Supprime un éventuel menu déjà ouvert
     const oldMenu = document.getElementById('delete-menu');
     if (oldMenu) oldMenu.remove();
@@ -138,10 +139,14 @@ function showDeleteMenu(messageElement, isOutgoing) {
         delForAll.onmouseover = () => delForAll.style.background = 'var(--contact-hover)';
         delForAll.onmouseout = () => delForAll.style.background = 'none';
         delForAll.onclick = () => {
+            // Suppression pour tout le monde
+            socket.emit('delete_message', {
+                messageId: messageId,
+                to: selectedContact,
+                from: currentUser
+            });
             messageElement.remove();
             menu.remove();
-            // Ici on pourra ajouter la logique serveur plus tard
-            alert('Suppression pour tout le monde à venir !');
         };
         menu.appendChild(delForAll);
     }
@@ -204,6 +209,12 @@ socket.on('private_message', (data) => {
         unreadMessages.add(data.from);
         renderContacts(searchInput.value);
     }
+});
+
+// Réception de la suppression pour tout le monde
+socket.on('delete_message', (data) => {
+    const msgElem = document.getElementById(data.messageId);
+    if (msgElem) msgElem.remove();
 });
 
 // --- Gestion du thème ---
