@@ -384,12 +384,14 @@ if (window.EmojiButton) {
         picker.togglePicker(emojiBtn);
     });
     picker.on('emoji', emoji => {
-        const input = messageInput;
+        console.log('Emoji choisi :', emoji);
+        const input = document.getElementById('messageInput');
+        if (!input) return;
         const start = input.selectionStart;
         const end = input.selectionEnd;
         const text = input.value;
-        input.value = text.slice(0, start) + emoji + text.slice(end);
+        input.value = text.slice(0, start) + emoji.emoji + text.slice(end);
         input.focus();
-        input.selectionStart = input.selectionEnd = start + emoji.length;
+        input.selectionStart = input.selectionEnd = start + emoji.emoji.length;
     });
 } 
