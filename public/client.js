@@ -234,7 +234,7 @@ function handleFileUpload(file) {
             addFileToChat(currentUser, data, true);
         }
     })
-    .catch(() => alert('Erreur lors de l'upload du fichier.'));
+    .catch(() => alert(`Erreur lors de l'upload du fichier.`));
 }
 
 // Affichage d'un fichier dans le chat
