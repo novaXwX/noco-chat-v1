@@ -6,7 +6,7 @@ const multer = require('multer');
 const path = require('path');
 
 // Sert les fichiers statiques (index.html, client.js, styles.css, etc.)
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json()); // Pour lire le JSON dans les requêtes
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
