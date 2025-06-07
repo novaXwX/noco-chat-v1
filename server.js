@@ -18,12 +18,20 @@ io.on('connection', (socket) => {
     console.log('Nouvelle connexion socket:', socket.id);
 
     socket.on('user_connected', (username) => {
-        connectedUsers.set(socket.id, username);
-        socket.username = username;
-        io.emit('user_connected', username);
-        const usersList = Array.from(new Set(connectedUsers.values()));
-        io.emit('connected_users', usersList);
-        console.log(`${username} connecté. Total utilisateurs: ${usersList.length}`);
+        // Vérifier si le pseudo est déjà pris
+        const isUsernameTaken = Array.from(connectedUsers.values()).includes(username);
+
+        if (isUsernameTaken) {
+            socket.emit('username_taken', 'Ce pseudo est déjà utilisé. Veuillez en choisir un autre.');
+            console.log(`Tentative de connexion avec le pseudo '${username}' déjà pris.`);
+        } else {
+            connectedUsers.set(socket.id, username);
+            socket.username = username;
+            io.emit('user_connected', username);
+            const usersList = Array.from(new Set(connectedUsers.values()));
+            io.emit('connected_users', usersList);
+            console.log(`${username} connecté. Total utilisateurs: ${usersList.length}`);
+        }
     });
 
     socket.on('get_connected_users', () => {

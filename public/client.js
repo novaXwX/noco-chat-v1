@@ -37,6 +37,13 @@ pseudoForm.addEventListener('submit', (e) => {
     socket.emit('user_connected', pseudo);
 });
 
+// Gérer l'événement de pseudo déjà pris
+socket.on('username_taken', (message) => {
+    alert(message);
+    pseudoForm.style.display = 'flex'; // Réafficher le formulaire de pseudo
+    chatContainer.style.display = 'none'; // Masquer le conteneur de chat
+});
+
 // Affichage des contacts
 function renderContacts(searchTerm = '') {
     contactsList.innerHTML = '';
@@ -262,14 +269,6 @@ window.onclick = (e) => {
         setTheme('theme-dark');
     }
 })();
-
-// Écouteur pour le switch animé
-const themeSwitchCheckbox = document.getElementById('themeSwitchCheckbox');
-if (themeSwitchCheckbox) {
-    themeSwitchCheckbox.addEventListener('change', () => {
-        setTheme(themeSwitchCheckbox.checked ? 'theme-dark' : 'theme-light');
-    });
-}
 
 // --- Drag & Drop fichiers (affichage zone drop + upload) ---
 let dragCounter = 0;
