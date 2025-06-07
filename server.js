@@ -46,7 +46,8 @@ io.on('connection', (socket) => {
             io.to(targetSocketId).emit('private_message', {
                 from: data.from,
                 text: data.text,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                replyTo: data.replyTo || null
             });
             console.log(`Message envoyé de ${data.from} à ${data.to}`);
         }

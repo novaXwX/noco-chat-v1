@@ -4,6 +4,7 @@ let selectedContact = null;
 let contacts = [];
 let unreadMessages = new Set();
 let fileToUpload = null;
+let currentReplyMessage = null;
 
 // Éléments DOM
 const pseudoForm = document.getElementById('pseudoForm');
@@ -79,12 +80,24 @@ searchInput.addEventListener('input', (e) => {
 });
 
 // Affichage des messages
-function addMessageToChat(sender, text, isOutgoing = false) {
+function addMessageToChat(sender, text, isOutgoing = false, replyTo = null) {
     const messageElement = document.createElement('div');
     messageElement.className = `message ${isOutgoing ? 'outgoing' : 'incoming'}`;
     const messageId = 'msg-' + Date.now() + '-' + Math.floor(Math.random()*10000);
     messageElement.id = messageId;
+
+    let replyHtml = '';
+    if (replyTo) {
+        replyHtml = `
+            <div class="message-reply-preview">
+                <span class="reply-sender">${replyTo.sender}</span>
+                <p class="reply-content">${replyTo.text}</p>
+            </div>
+        `;
+    }
+
     messageElement.innerHTML = `
+        ${replyHtml}
         <div class="message-content-row" style="display:flex;align-items:flex-start;justify-content:space-between;">
             <div style="flex:1;min-width:0;">
                 <div style="display:flex;align-items:center;gap:8px;">
@@ -95,6 +108,7 @@ function addMessageToChat(sender, text, isOutgoing = false) {
             </div>
         </div>
         <span class="message-time" style="display:block;text-align:right;margin-top:2px;opacity:0.7;">${new Date().toLocaleTimeString()}</span>
+        <button class="reply-btn" data-message-id="${messageId}" data-sender="${sender}" data-text="${text}" title="Répondre"><i class="fas fa-reply"></i></button>
     `;
     messagesList.appendChild(messageElement);
     messagesList.scrollTop = messagesList.scrollHeight;
@@ -105,6 +119,47 @@ function addMessageToChat(sender, text, isOutgoing = false) {
         e.stopPropagation();
         showDeleteMenu(messageElement, isOutgoing, messageId);
     });
+
+    // Gestion du bouton de réponse
+    const replyButton = messageElement.querySelector('.reply-btn');
+    replyButton.addEventListener('click', () => {
+        const msgId = replyButton.dataset.messageId;
+        const msgSender = replyButton.dataset.sender;
+        const msgText = replyButton.dataset.text;
+        
+        currentReplyMessage = {
+            id: msgId,
+            sender: msgSender,
+            text: msgText
+        };
+        
+        // Afficher la prévisualisation de la réponse dans la zone de saisie
+        displayReplyPreview(msgSender, msgText);
+    });
+}
+
+// Fonction pour afficher la prévisualisation de la réponse
+function displayReplyPreview(sender, text) {
+    let replyPreview = document.getElementById('replyPreview');
+    if (!replyPreview) {
+        replyPreview = document.createElement('div');
+        replyPreview.id = 'replyPreview';
+        replyPreview.className = 'message-reply-input-preview';
+        replyPreview.innerHTML = `
+            <div class="reply-header">
+                Répondre à <span class="reply-sender">${sender}</span>
+                <span class="close-reply-preview">&times;</span>
+            </div>
+            <p class="reply-content">${text}</p>
+        `;
+        messageForm.insertBefore(replyPreview, messageInput);
+
+        replyPreview.querySelector('.close-reply-preview').addEventListener('click', () => {
+            currentReplyMessage = null;
+            replyPreview.remove();
+        });
+    }
+    messageInput.focus();
 }
 
 // Menu suppression façon WhatsApp
@@ -178,12 +233,20 @@ messageForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const message = messageInput.value.trim();
     if (message && selectedContact) {
-        socket.emit('private_message', {
+        const messageData = {
             from: currentUser,
             to: selectedContact,
             text: message
-        });
-        addMessageToChat(currentUser, message, true);
+        };
+
+        if (currentReplyMessage) {
+            messageData.replyTo = currentReplyMessage;
+            currentReplyMessage = null; // Réinitialiser après l'envoi
+            document.getElementById('replyPreview')?.remove();
+        }
+
+        socket.emit('private_message', messageData);
+        addMessageToChat(currentUser, message, true, messageData.replyTo);
         messageInput.value = '';
     }
 });
@@ -213,7 +276,7 @@ socket.on('private_message', (data) => {
     if (data.file) {
         addFileToChat(data.from, data.file, data.from === currentUser);
     } else if (data.from === selectedContact || data.from === currentUser) {
-        addMessageToChat(data.from, data.text, data.from === currentUser);
+        addMessageToChat(data.from, data.text, data.from === currentUser, data.replyTo);
     } else {
         unreadMessages.add(data.from);
         renderContacts(searchInput.value);
