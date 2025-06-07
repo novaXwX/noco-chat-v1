@@ -224,13 +224,6 @@ function setTheme(theme) {
     document.body.classList.remove('theme-dark', 'theme-light');
     document.body.classList.add(theme);
     localStorage.setItem('noco-theme', theme);
-    
-    // Synchroniser le switch animé
-    const themeSwitchCheckbox = document.getElementById('themeSwitchCheckbox');
-    if (themeSwitchCheckbox) {
-        themeSwitchCheckbox.checked = theme === 'theme-dark';
-    }
-    
     // Change l'icône de la roue
     if (theme === 'theme-dark') {
         toggleTheme.innerHTML = '<i class="fas fa-moon"></i> Thème clair';
