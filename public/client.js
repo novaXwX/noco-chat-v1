@@ -108,7 +108,6 @@ function addMessageToChat(sender, text, isOutgoing = false, replyTo = null) {
             </div>
         </div>
         <span class="message-time" style="display:block;text-align:right;margin-top:2px;opacity:0.7;">${new Date().toLocaleTimeString()}</span>
-        <button class="reply-btn" data-message-id="${messageId}" data-sender="${sender}" data-text="${text}" title="Répondre"><i class="fas fa-reply"></i></button>
     `;
     messagesList.appendChild(messageElement);
     messagesList.scrollTop = messagesList.scrollHeight;
@@ -117,53 +116,12 @@ function addMessageToChat(sender, text, isOutgoing = false, replyTo = null) {
     const btn = messageElement.querySelector('.message-menu-btn');
     btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        showDeleteMenu(messageElement, isOutgoing, messageId);
+        showDeleteMenu(messageElement, isOutgoing, messageId, sender, text);
     });
-
-    // Gestion du bouton de réponse
-    const replyButton = messageElement.querySelector('.reply-btn');
-    replyButton.addEventListener('click', () => {
-        const msgId = replyButton.dataset.messageId;
-        const msgSender = replyButton.dataset.sender;
-        const msgText = replyButton.dataset.text;
-        
-        currentReplyMessage = {
-            id: msgId,
-            sender: msgSender,
-            text: msgText
-        };
-        
-        // Afficher la prévisualisation de la réponse dans la zone de saisie
-        displayReplyPreview(msgSender, msgText);
-    });
-}
-
-// Fonction pour afficher la prévisualisation de la réponse
-function displayReplyPreview(sender, text) {
-    let replyPreview = document.getElementById('replyPreview');
-    if (!replyPreview) {
-        replyPreview = document.createElement('div');
-        replyPreview.id = 'replyPreview';
-        replyPreview.className = 'message-reply-input-preview';
-        replyPreview.innerHTML = `
-            <div class="reply-header">
-                Répondre à <span class="reply-sender">${sender}</span>
-                <span class="close-reply-preview">&times;</span>
-            </div>
-            <p class="reply-content">${text}</p>
-        `;
-        messageForm.insertBefore(replyPreview, messageInput);
-
-        replyPreview.querySelector('.close-reply-preview').addEventListener('click', () => {
-            currentReplyMessage = null;
-            replyPreview.remove();
-        });
-    }
-    messageInput.focus();
 }
 
 // Menu suppression façon WhatsApp
-function showDeleteMenu(messageElement, isOutgoing, messageId) {
+function showDeleteMenu(messageElement, isOutgoing, messageId, messageSender, messageText) {
     // Supprime un éventuel menu déjà ouvert
     const oldMenu = document.getElementById('delete-menu');
     if (oldMenu) oldMenu.remove();
@@ -182,6 +140,25 @@ function showDeleteMenu(messageElement, isOutgoing, messageId) {
     menu.style.top = '30px';
     menu.style.minWidth = '160px';
     menu.style.textAlign = 'left';
+
+    // Option Répondre
+    const replyOption = document.createElement('div');
+    replyOption.textContent = 'Répondre';
+    replyOption.style.padding = '8px 16px';
+    replyOption.style.cursor = 'pointer';
+    replyOption.onmouseover = () => replyOption.style.background = 'var(--contact-hover)';
+    replyOption.onmouseout = () => replyOption.style.background = 'none';
+    replyOption.onclick = () => {
+        currentReplyMessage = {
+            id: messageId,
+            sender: messageSender,
+            text: messageText
+        };
+        displayReplyPreview(messageSender, messageText);
+        menu.remove();
+    };
+    menu.appendChild(replyOption);
+
     // Option supprimer pour moi
     const delForMe = document.createElement('div');
     delForMe.textContent = 'Supprimer pour moi';
@@ -226,6 +203,30 @@ function showDeleteMenu(messageElement, isOutgoing, messageId) {
         }
     }
     setTimeout(() => document.addEventListener('mousedown', closeMenu), 10);
+}
+
+// Fonction pour afficher la prévisualisation de la réponse
+function displayReplyPreview(sender, text) {
+    let replyPreview = document.getElementById('replyPreview');
+    if (!replyPreview) {
+        replyPreview = document.createElement('div');
+        replyPreview.id = 'replyPreview';
+        replyPreview.className = 'message-reply-input-preview';
+        replyPreview.innerHTML = `
+            <div class="reply-header">
+                Répondre à <span class="reply-sender">${sender}</span>
+                <span class="close-reply-preview">&times;</span>
+            </div>
+            <p class="reply-content">${text}</p>
+        `;
+        messageForm.insertBefore(replyPreview, messageInput);
+
+        replyPreview.querySelector('.close-reply-preview').addEventListener('click', () => {
+            currentReplyMessage = null;
+            replyPreview.remove();
+        });
+    }
+    messageInput.focus();
 }
 
 // Envoi de message
