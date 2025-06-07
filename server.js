@@ -53,6 +53,15 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('delete_message', (data) => {
+        const targetSocketId = Array.from(connectedUsers.entries())
+            .find(([_, username]) => username === data.to)?.[0];
+        if (targetSocketId && targetSocketId !== socket.id) { // Assurez-vous de ne pas l'envoyer à soi-même deux fois
+            io.to(targetSocketId).emit('delete_message', { messageId: data.messageId });
+            console.log(`Message ${data.messageId} supprimé pour ${data.to} par ${data.from}`);
+        }
+    });
+
     socket.on('disconnect', () => {
         const username = connectedUsers.get(socket.id);
         if (username) {
