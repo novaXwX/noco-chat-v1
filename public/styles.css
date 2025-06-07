@@ -523,4 +523,26 @@ body {
 
 .message-reply-input-preview .close-reply-preview:hover {
     opacity: 1;
+}
+
+/* Styles pour le message d'introduction */
+.introductory-message {
+    background-color: #2c3e50; /* Couleur de fond sombre similaire à l'exemple WhatsApp */
+    color: #fff; /* Texte blanc */
+    padding: 12px 18px;
+    border-radius: 8px; /* Coins arrondis */
+    margin: 20px auto; /* Centrer le message et ajouter de l'espace */
+    max-width: 80%;
+    text-align: center;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.introductory-message i.fas.fa-lock {
+    font-size: 1.1rem;
+    margin-right: 5px;
 } 
