@@ -734,11 +734,66 @@ body {
 }
 
 /* Style pour les messages supprimés */
-.message.deleted .message-content-row {
+.message.deleted {
     opacity: 0.7;
+}
+
+.message.deleted .message-content-row {
+    background: var(--bg-sidebar);
+    padding: 8px 12px;
+    border-radius: 8px;
 }
 
 .message.deleted .message-content-row p {
     font-style: italic;
     color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Animation pour la restauration de message */
+@keyframes restoreMessage {
+    from {
+        opacity: 0.7;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.message.restored {
+    animation: restoreMessage 0.3s ease-out;
+}
+
+/* Styles pour le menu contextuel */
+.message-context-menu button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 15px;
+    border: none;
+    background: none;
+    color: var(--text-main);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.message-context-menu button:hover {
+    background: var(--contact-hover);
+}
+
+.message-context-menu button i {
+    width: 20px;
+    text-align: center;
+}
+
+.message-context-menu button.delete-permanently {
+    color: #e74c3c;
+}
+
+.message-context-menu button.restore {
+    color: #2ecc71;
 }

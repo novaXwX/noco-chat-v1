@@ -192,27 +192,34 @@ function showContextMenu(e, messageId, sender, text, isOutgoing) {
     contextMenu.style.left = `${e.clientX}px`;
     contextMenu.dataset.messageId = messageId;
 
-    // Option Répondre
-    const replyOption = document.createElement('button');
-    replyOption.innerHTML = '<i class="fas fa-reply"></i> Répondre';
-    replyOption.addEventListener('click', () => {
-        currentReplyMessage = { id: messageId, sender: sender, text: text };
-        displayReplyPreview(sender, text);
-        contextMenu.remove();
-    });
-    contextMenu.appendChild(replyOption);
+    const messageElement = document.getElementById(messageId);
+    const isDeleted = messageElement?.classList.contains('deleted');
 
-    // Option Supprimer pour moi
-    const deleteForMeOption = document.createElement('button');
-    deleteForMeOption.innerHTML = '<i class="fas fa-trash"></i> Supprimer pour moi';
-    deleteForMeOption.addEventListener('click', () => {
-        deleteMessage(messageId, false);
-        contextMenu.remove();
-    });
-    contextMenu.appendChild(deleteForMeOption);
+    // Option Répondre (uniquement si le message n'est pas supprimé)
+    if (!isDeleted) {
+        const replyOption = document.createElement('button');
+        replyOption.innerHTML = '<i class="fas fa-reply"></i> Répondre';
+        replyOption.addEventListener('click', () => {
+            currentReplyMessage = { id: messageId, sender: sender, text: text };
+            displayReplyPreview(sender, text);
+            contextMenu.remove();
+        });
+        contextMenu.appendChild(replyOption);
+    }
 
-    // Option Supprimer pour tous (uniquement pour les messages sortants)
-    if (isOutgoing) {
+    // Option Supprimer pour moi (si le message n'est pas déjà supprimé)
+    if (!isDeleted) {
+        const deleteForMeOption = document.createElement('button');
+        deleteForMeOption.innerHTML = '<i class="fas fa-trash"></i> Supprimer pour moi';
+        deleteForMeOption.addEventListener('click', () => {
+            deleteMessage(messageId, false);
+            contextMenu.remove();
+        });
+        contextMenu.appendChild(deleteForMeOption);
+    }
+
+    // Option Supprimer pour tous (uniquement pour les messages sortants non supprimés)
+    if (isOutgoing && !isDeleted) {
         const deleteForEveryoneOption = document.createElement('button');
         deleteForEveryoneOption.innerHTML = '<i class="fas fa-trash-alt"></i> Supprimer pour tous';
         deleteForEveryoneOption.addEventListener('click', () => {
@@ -220,6 +227,28 @@ function showContextMenu(e, messageId, sender, text, isOutgoing) {
             contextMenu.remove();
         });
         contextMenu.appendChild(deleteForEveryoneOption);
+    }
+
+    // Option Restaurer (si le message est supprimé)
+    if (isDeleted) {
+        const restoreOption = document.createElement('button');
+        restoreOption.innerHTML = '<i class="fas fa-undo"></i> Restaurer le message';
+        restoreOption.addEventListener('click', () => {
+            restoreMessage(messageId);
+            contextMenu.remove();
+        });
+        contextMenu.appendChild(restoreOption);
+    }
+
+    // Option Supprimer définitivement (si le message est supprimé)
+    if (isDeleted) {
+        const deletePermanentlyOption = document.createElement('button');
+        deletePermanentlyOption.innerHTML = '<i class="fas fa-times-circle"></i> Supprimer définitivement';
+        deletePermanentlyOption.addEventListener('click', () => {
+            deleteMessagePermanently(messageId);
+            contextMenu.remove();
+        });
+        contextMenu.appendChild(deletePermanentlyOption);
     }
 
     document.body.appendChild(contextMenu);
@@ -640,4 +669,93 @@ socket.on('delete_message', (data) => {
             messageElement.remove();
         }
     }
-}); 
+});
+
+// Fonction pour restaurer un message
+function restoreMessage(messageId) {
+    const messageElement = document.getElementById(messageId);
+    if (!messageElement) return;
+
+    // Récupérer le message original depuis l'historique
+    if (chatMessages.has(selectedContact)) {
+        const messages = chatMessages.get(selectedContact);
+        const message = messages.find(msg => msg.id === messageId);
+        if (message) {
+            // Restaurer le contenu du message
+            const contentRow = messageElement.querySelector('.message-content-row');
+            if (contentRow) {
+                if (message.file) {
+                    // Restaurer un message avec fichier
+                    contentRow.innerHTML = `
+                        <div class="message-content">
+                            <span class="message-sender">${message.from}</span>
+                            ${getFileContent(message.file)}
+                        </div>
+                    `;
+                } else {
+                    // Restaurer un message texte
+                    contentRow.innerHTML = `
+                        <div class="message-content">
+                            <span class="message-sender">${message.from}</span>
+                            <p>${message.text}</p>
+                        </div>
+                    `;
+                }
+            }
+            messageElement.classList.remove('deleted');
+        }
+    }
+}
+
+// Fonction pour supprimer définitivement un message
+function deleteMessagePermanently(messageId) {
+    const messageElement = document.getElementById(messageId);
+    if (!messageElement) return;
+
+    // Supprimer le message de l'historique
+    if (chatMessages.has(selectedContact)) {
+        const messages = chatMessages.get(selectedContact);
+        const index = messages.findIndex(msg => msg.id === messageId);
+        if (index !== -1) {
+            messages.splice(index, 1);
+        }
+    }
+
+    // Supprimer l'élément du DOM
+    messageElement.remove();
+}
+
+// Fonction pour obtenir le contenu HTML d'un fichier
+function getFileContent(fileData) {
+    if (fileData.type.startsWith('image/')) {
+        return `
+            <div class="message-media">
+                <img src="${fileData.url}" alt="${fileData.name}" class="message-image" onclick="openMediaViewer(this.src)">
+                <div class="file-info">
+                    <span class="file-name">${fileData.name}</span>
+                    <span class="file-size">${formatFileSize(fileData.size)}</span>
+                </div>
+            </div>`;
+    } else if (fileData.type.startsWith('video/')) {
+        return `
+            <div class="message-media">
+                <video controls class="message-video">
+                    <source src="${fileData.url}" type="${fileData.type}">
+                    Votre navigateur ne supporte pas la lecture de vidéos.
+                </video>
+                <div class="file-info">
+                    <span class="file-name">${fileData.name}</span>
+                    <span class="file-size">${formatFileSize(fileData.size)}</span>
+                </div>
+            </div>`;
+    } else {
+        return `
+            <div class="message-file">
+                <i class="fas fa-file"></i>
+                <div class="file-info">
+                    <span class="file-name">${fileData.name}</span>
+                    <span class="file-size">${formatFileSize(fileData.size)}</span>
+                </div>
+            </div>`;
+    }
+} 
