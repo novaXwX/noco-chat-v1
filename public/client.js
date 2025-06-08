@@ -255,51 +255,137 @@ socket.on('delete_message', (data) => {
     }
 });
 
-// --- Drag & Drop fichiers (affichage zone drop + upload) ---
-let dragCounter = 0;
-window.addEventListener('dragenter', (e) => {
-    e.preventDefault();
-    dragCounter++;
-    if (dropZone) {
-        dropZone.style.display = 'flex';
-        setTimeout(() => dropZone.classList.add('active'), 10);
-    }
-});
-window.addEventListener('dragleave', (e) => {
-    e.preventDefault();
-    dragCounter--;
-    if (dragCounter <= 0 && dropZone) {
-        dropZone.classList.remove('active');
-        setTimeout(() => dropZone.style.display = 'none', 200);
-        dragCounter = 0;
-    }
-});
-window.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    if (dropZone) dropZone.classList.add('active');
-});
-window.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dragCounter = 0;
-    if (dropZone) {
-        dropZone.classList.remove('active');
-        setTimeout(() => dropZone.style.display = 'none', 200);
-    }
-    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        handleFileUpload(e.dataTransfer.files[0]);
-    }
-});
-
-// Fonction d'upload de fichier (désactivée)
+// Gestion des fichiers
 function handleFileUpload(file) {
-    alert("L'envoi de fichiers est désactivé pour le moment.");
-    return;
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const fileData = {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            data: e.target.result
+        };
+        
+        const messageId = 'msg-' + Date.now() + '-' + Math.floor(Math.random()*10000);
+        const messageData = {
+            id: messageId,
+            from: currentUser,
+            to: selectedContact,
+            file: fileData,
+            timestamp: new Date().toISOString()
+        };
+
+        socket.emit('private_message', messageData);
+        
+        // Stocker le message pour l'expéditeur
+        if (!chatMessages.has(selectedContact)) {
+            chatMessages.set(selectedContact, []);
+        }
+        chatMessages.get(selectedContact).push(messageData);
+
+        addFileToChat(currentUser, fileData, true, messageId);
+        hideIntroductoryMessage();
+    };
+    reader.readAsDataURL(file);
 }
 
-// Affichage d'un fichier dans le chat (désactivé)
-function addFileToChat(sender, fileData, isOutgoing = false) {
-    // Ne rien faire
+function addFileToChat(sender, fileData, isOutgoing = false, messageId = null) {
+    const messageElement = document.createElement('div');
+    messageElement.className = `message ${isOutgoing ? 'outgoing' : 'incoming'}`;
+    if (messageId) messageElement.id = messageId;
+
+    let fileContent = '';
+    if (fileData.type.startsWith('image/')) {
+        fileContent = `<img src="${fileData.data}" alt="${fileData.name}" class="message-image" onclick="openMediaViewer(this.src)">`;
+    } else if (fileData.type.startsWith('video/')) {
+        fileContent = `
+            <video controls class="message-video">
+                <source src="${fileData.data}" type="${fileData.type}">
+                Votre navigateur ne supporte pas la lecture de vidéos.
+            </video>`;
+    } else {
+        fileContent = `<a href="${fileData.data}" download="${fileData.name}" class="message-file">
+            <i class="fas fa-file"></i> ${fileData.name}
+        </a>`;
+    }
+
+    messageElement.innerHTML = `
+        <div class="message-content-row">
+            <div class="message-content">
+                <span class="message-sender">${sender}</span>
+                ${fileContent}
+            </div>
+        </div>
+        <span class="message-time">${new Date().toLocaleTimeString()}</span>
+    `;
+    messagesList.appendChild(messageElement);
+    messagesList.scrollTop = messagesList.scrollHeight;
 }
+
+// Fonction pour ouvrir le visualiseur de médias
+function openMediaViewer(src) {
+    const viewer = document.createElement('div');
+    viewer.className = 'media-viewer';
+    viewer.innerHTML = `
+        <div class="media-viewer-content">
+            <img src="${src}" alt="Image en plein écran">
+            <button class="close-viewer">&times;</button>
+        </div>
+    `;
+    document.body.appendChild(viewer);
+    
+    viewer.querySelector('.close-viewer').onclick = () => viewer.remove();
+    viewer.onclick = (e) => {
+        if (e.target === viewer) viewer.remove();
+    };
+}
+
+// Gestionnaire d'événements pour le glisser-déposer
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.style.display = 'flex';
+});
+
+dropZone.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    dropZone.style.display = 'none';
+});
+
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.style.display = 'none';
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        handleFileUpload(files[0]);
+    }
+});
+
+// Ajout du bouton d'envoi de fichier
+const fileInput = document.createElement('input');
+fileInput.type = 'file';
+fileInput.accept = 'image/*,video/*';
+fileInput.style.display = 'none';
+document.body.appendChild(fileInput);
+
+const fileButton = document.createElement('button');
+fileButton.type = 'button';
+fileButton.innerHTML = '<i class="fas fa-paperclip"></i>';
+fileButton.className = 'file-button';
+messageForm.insertBefore(fileButton, messageInput);
+
+fileButton.addEventListener('click', () => {
+    fileInput.click();
+});
+
+fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+        handleFileUpload(e.target.files[0]);
+        e.target.value = ''; // Réinitialiser l'input
+    }
+});
 
 // Ajout de l'affichage "en train d'écrire..." sous le nom du contact et dans la zone de chat
 function showTypingIndicator(sender) {
