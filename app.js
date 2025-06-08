@@ -7,7 +7,7 @@ const path = require('path');
 
 // Sert les fichiers statiques (index.html, client.js, styles.css, etc.)
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json()); // Pour lire le JSON dans les requêtes
+app.use(express.json({ limit: '50mb' })); // Augmenter la limite pour les fichiers volumineux
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Configuration de multer pour l'upload
