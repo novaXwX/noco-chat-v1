@@ -144,8 +144,15 @@ function addMessageToChat(sender, text, isOutgoing = false, replyTo = null, mess
     const menuBtn = messageElement.querySelector('.message-menu-button');
     if (menuBtn) {
         menuBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Empêcher la propagation pour ne pas fermer immédiatement
-            showContextMenu(e, messageId, sender, text, isOutgoing);
+            e.stopPropagation(); // Empêcher la propagation pour ne pas fermer immédiatement le menu global
+
+            const existingMenu = document.getElementById('messageContextMenu');
+            // Si un menu est déjà ouvert pour ce message, le fermer
+            if (existingMenu && existingMenu.dataset.messageId === messageId) {
+                existingMenu.remove(); 
+            } else {
+                showContextMenu(e, messageId, sender, text, isOutgoing);
+            }
         });
     }
 
@@ -164,6 +171,7 @@ function showContextMenu(e, messageId, sender, text, isOutgoing) {
     contextMenu.className = 'message-context-menu';
     contextMenu.style.top = `${e.clientY}px`;
     contextMenu.style.left = `${e.clientX}px`;
+    contextMenu.dataset.messageId = messageId; // Stocker l'ID du message sur le menu
 
     // Option Répondre
     const replyOption = document.createElement('button');
@@ -175,20 +183,21 @@ function showContextMenu(e, messageId, sender, text, isOutgoing) {
     });
     contextMenu.appendChild(replyOption);
 
-    // Options Supprimer (si le message est sortant)
-    if (isOutgoing) {
-        const deleteForMeOption = document.createElement('button');
-        deleteForMeOption.innerHTML = '<i class="fas fa-trash"></i> Supprimer pour moi';
-        deleteForMeOption.addEventListener('click', () => {
-            deleteMessage(messageId, false);
-            contextMenu.remove();
-        });
-        contextMenu.appendChild(deleteForMeOption);
+    // Option Supprimer pour moi (toujours disponible)
+    const deleteForMeOption = document.createElement('button');
+    deleteForMeOption.innerHTML = '<i class="fas fa-trash"></i> Supprimer pour moi';
+    deleteForMeOption.addEventListener('click', () => {
+        deleteMessage(messageId, false); // false signifie supprimer seulement pour l'utilisateur actuel
+        contextMenu.remove();
+    });
+    contextMenu.appendChild(deleteForMeOption);
 
+    // Option Supprimer pour tout le monde (seulement pour les messages sortants)
+    if (isOutgoing) {
         const deleteForEveryoneOption = document.createElement('button');
         deleteForEveryoneOption.innerHTML = '<i class="fas fa-trash-alt"></i> Supprimer pour tout le monde';
         deleteForEveryoneOption.addEventListener('click', () => {
-            deleteMessage(messageId, true);
+            deleteMessage(messageId, true); // true signifie supprimer pour tout le monde
             contextMenu.remove();
         });
         contextMenu.appendChild(deleteForEveryoneOption);
@@ -197,10 +206,10 @@ function showContextMenu(e, messageId, sender, text, isOutgoing) {
     document.body.appendChild(contextMenu);
 
     // Fermer le menu si on clique ailleurs
-    document.addEventListener('click', function closeMenu(event) {
-        if (!contextMenu.contains(event.target) && event.target !== menuBtn) {
+    document.addEventListener('click', function closeMenuGlobal(event) {
+        if (!contextMenu.contains(event.target) && !event.target.closest('.message-menu-button')) {
             contextMenu.remove();
-            document.removeEventListener('click', closeMenu);
+            document.removeEventListener('click', closeMenuGlobal);
         }
     });
 }
@@ -329,24 +338,35 @@ socket.on('private_message', (data) => {
 });
 
 // Gestion des fichiers
-function handleFileUpload(file) {
+async function handleFileUpload(file) {
     if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const fileData = {
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            data: e.target.result
-        };
-        
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await fetch('/upload', {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!response.ok) {
+            throw new Error(`Erreur d'upload: ${response.statusText}`);
+        }
+
+        const fileInfo = await response.json(); // { url, originalname, mimetype, size }
+
         const messageId = 'msg-' + Date.now() + '-' + Math.floor(Math.random()*10000);
         const messageData = {
             id: messageId,
             from: currentUser,
             to: selectedContact,
-            file: fileData,
+            file: {
+                url: fileInfo.url,
+                name: fileInfo.originalname,
+                type: fileInfo.mimetype,
+                size: fileInfo.size
+            },
             timestamp: new Date().toISOString()
         };
 
@@ -358,10 +378,13 @@ function handleFileUpload(file) {
         }
         chatMessages.get(selectedContact).push(messageData);
 
-        addFileToChat(currentUser, fileData, true, messageId);
+        addFileToChat(currentUser, messageData.file, true, messageId);
         hideIntroductoryMessage();
-    };
-    reader.readAsDataURL(file);
+
+    } catch (error) {
+        console.error('Erreur lors de l'envoi du fichier:', error);
+        alert('Échec de l'envoi du fichier.');
+    }
 }
 
 function addFileToChat(sender, fileData, isOutgoing = false, messageId = null) {
@@ -371,15 +394,15 @@ function addFileToChat(sender, fileData, isOutgoing = false, messageId = null) {
 
     let fileContent = '';
     if (fileData.type.startsWith('image/')) {
-        fileContent = `<img src="${fileData.data}" alt="${fileData.name}" class="message-image" onclick="openMediaViewer(this.src)">`;
+        fileContent = `<img src="${fileData.url}" alt="${fileData.name}" class="message-image" onclick="openMediaViewer(this.src)">`;
     } else if (fileData.type.startsWith('video/')) {
         fileContent = `
             <video controls class="message-video">
-                <source src="${fileData.data}" type="${fileData.type}">
+                <source src="${fileData.url}" type="${fileData.type}">
                 Votre navigateur ne supporte pas la lecture de vidéos.
             </video>`;
     } else {
-        fileContent = `<a href="${fileData.data}" download="${fileData.name}" class="message-file">
+        fileContent = `<a href="${fileData.url}" download="${fileData.name}" class="message-file">
             <i class="fas fa-file"></i> ${fileData.name}
         </a>`;
     }
@@ -439,7 +462,7 @@ dropZone.addEventListener('drop', (e) => {
 // Ajout du bouton d'envoi de fichier
 const fileInput = document.createElement('input');
 fileInput.type = 'file';
-fileInput.accept = 'image/*,video/*';
+fileInput.accept = "image/*,video/*";
 fileInput.style.display = 'none';
 document.body.appendChild(fileInput);
 
@@ -520,5 +543,23 @@ socket.on('typing', (data) => {
 socket.on('stop_typing', (data) => {
     if (data.from === selectedContact) {
         hideTypingIndicator();
+    }
+});
+
+// Gérer la réception de la suppression pour tout le monde (pour le destinataire)
+socket.on('delete_message', (data) => {
+    if (data.forEveryone) {
+        const msgElem = document.getElementById(data.messageId);
+        if (msgElem) msgElem.remove();
+
+        // Retirer également du stockage côté client
+        if (chatMessages.has(data.from)) {
+            let messages = chatMessages.get(data.from);
+            chatMessages.set(data.from, messages.filter(msg => msg.id !== data.messageId));
+        }
+        if (chatMessages.has(data.to)) {
+            let messages = chatMessages.get(data.to);
+            chatMessages.set(data.to, messages.filter(msg => msg.id !== data.messageId));
+        }
     }
 }); 
