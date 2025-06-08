@@ -123,17 +123,8 @@ function addMessageToChat(sender, text, isOutgoing = false, replyTo = null, mess
         `;
     }
 
-    // Ajouter les boutons de suppression pour les messages sortants
-    const deleteButtons = isOutgoing ? `
-        <div class="message-actions">
-            <button class="delete-for-me" title="Supprimer pour moi">
-                <i class="fas fa-trash"></i>
-            </button>
-            <button class="delete-for-everyone" title="Supprimer pour tout le monde">
-                <i class="fas fa-trash-alt"></i>
-            </button>
-        </div>
-    ` : '';
+    // Ajouter le bouton de menu contextuel
+    const menuButton = `<button class="message-menu-button"><i class="fas fa-ellipsis-v"></i></button>`;
 
     messageElement.innerHTML = `
         ${replyHtml}
@@ -144,27 +135,74 @@ function addMessageToChat(sender, text, isOutgoing = false, replyTo = null, mess
                 </div>
                 <p style="margin:4px 0 0 0;word-break:break-word;">${text}</p>
             </div>
-            ${deleteButtons}
+            ${menuButton}
         </div>
         <span class="message-time" style="display:block;text-align:right;margin-top:2px;opacity:0.7;">${new Date().toLocaleTimeString()}</span>
     `;
 
-    // Ajouter les gestionnaires d'événements pour les boutons de suppression
-    if (isOutgoing) {
-        const deleteForMeBtn = messageElement.querySelector('.delete-for-me');
-        const deleteForEveryoneBtn = messageElement.querySelector('.delete-for-everyone');
-
-        deleteForMeBtn.addEventListener('click', () => {
-            deleteMessage(messageId, false);
-        });
-
-        deleteForEveryoneBtn.addEventListener('click', () => {
-            deleteMessage(messageId, true);
+    // Ajouter le gestionnaire d'événements pour le menu contextuel
+    const menuBtn = messageElement.querySelector('.message-menu-button');
+    if (menuBtn) {
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Empêcher la propagation pour ne pas fermer immédiatement
+            showContextMenu(e, messageId, sender, text, isOutgoing);
         });
     }
 
     messagesList.appendChild(messageElement);
     messagesList.scrollTop = messagesList.scrollHeight;
+}
+
+// Fonction pour afficher le menu contextuel
+function showContextMenu(e, messageId, sender, text, isOutgoing) {
+    // Supprimer tout menu existant
+    const existingMenu = document.getElementById('messageContextMenu');
+    if (existingMenu) existingMenu.remove();
+
+    const contextMenu = document.createElement('div');
+    contextMenu.id = 'messageContextMenu';
+    contextMenu.className = 'message-context-menu';
+    contextMenu.style.top = `${e.clientY}px`;
+    contextMenu.style.left = `${e.clientX}px`;
+
+    // Option Répondre
+    const replyOption = document.createElement('button');
+    replyOption.innerHTML = '<i class="fas fa-reply"></i> Répondre';
+    replyOption.addEventListener('click', () => {
+        currentReplyMessage = { id: messageId, sender: sender, text: text };
+        displayReplyPreview(sender, text);
+        contextMenu.remove();
+    });
+    contextMenu.appendChild(replyOption);
+
+    // Options Supprimer (si le message est sortant)
+    if (isOutgoing) {
+        const deleteForMeOption = document.createElement('button');
+        deleteForMeOption.innerHTML = '<i class="fas fa-trash"></i> Supprimer pour moi';
+        deleteForMeOption.addEventListener('click', () => {
+            deleteMessage(messageId, false);
+            contextMenu.remove();
+        });
+        contextMenu.appendChild(deleteForMeOption);
+
+        const deleteForEveryoneOption = document.createElement('button');
+        deleteForEveryoneOption.innerHTML = '<i class="fas fa-trash-alt"></i> Supprimer pour tout le monde';
+        deleteForEveryoneOption.addEventListener('click', () => {
+            deleteMessage(messageId, true);
+            contextMenu.remove();
+        });
+        contextMenu.appendChild(deleteForEveryoneOption);
+    }
+
+    document.body.appendChild(contextMenu);
+
+    // Fermer le menu si on clique ailleurs
+    document.addEventListener('click', function closeMenu(event) {
+        if (!contextMenu.contains(event.target) && event.target !== menuBtn) {
+            contextMenu.remove();
+            document.removeEventListener('click', closeMenu);
+        }
+    });
 }
 
 // Fonction pour supprimer un message
