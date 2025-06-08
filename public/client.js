@@ -108,7 +108,7 @@ searchInput.addEventListener('input', (e) => {
 });
 
 // Affichage des messages
-function addMessageToChat(sender, text, isOutgoing = false, replyTo = null, messageId = null) {
+function addMessageToChat(sender, text, isOutgoing = false, replyTo = null, messageId = null, isDeleted = false) {
     const messageElement = document.createElement('div');
     messageElement.className = `message ${isOutgoing ? 'outgoing' : 'incoming'}`;
     messageElement.id = messageId;
@@ -133,27 +133,27 @@ function addMessageToChat(sender, text, isOutgoing = false, replyTo = null, mess
                 <div style="display:flex;align-items:center;gap:8px;">
                     <span class="message-sender" style="font-size:1rem;">${sender}</span>
                 </div>
-                <p style="margin:4px 0 0 0;word-break:break-word;">${text}</p>
+                <p style="margin:4px 0 0 0;word-break:break-word;">${isDeleted ? '<i>Ce message a été supprimé</i>' : text}</p>
             </div>
-            ${menuButton}
+            ${!isDeleted ? menuButton : ''}
         </div>
         <span class="message-time" style="display:block;text-align:right;margin-top:2px;opacity:0.7;">${new Date().toLocaleTimeString()}</span>
     `;
 
-    // Ajouter le gestionnaire d'événements pour le menu contextuel
-    const menuBtn = messageElement.querySelector('.message-menu-button');
-    if (menuBtn) {
-        menuBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Empêcher la propagation pour ne pas fermer immédiatement le menu global
-
-            const existingMenu = document.getElementById('messageContextMenu');
-            // Si un menu est déjà ouvert pour ce message, le fermer
-            if (existingMenu && existingMenu.dataset.messageId === messageId) {
-                existingMenu.remove(); 
-            } else {
-                showContextMenu(e, messageId, sender, text, isOutgoing);
-            }
-        });
+    // Ajouter le gestionnaire d'événements pour le menu contextuel seulement si le message n'est pas supprimé
+    if (!isDeleted) {
+        const menuBtn = messageElement.querySelector('.message-menu-button');
+        if (menuBtn) {
+            menuBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const existingMenu = document.getElementById('messageContextMenu');
+                if (existingMenu && existingMenu.dataset.messageId === messageId) {
+                    existingMenu.remove(); 
+                } else {
+                    showContextMenu(e, messageId, sender, text, isOutgoing);
+                }
+            });
+        }
     }
 
     messagesList.appendChild(messageElement);
@@ -352,7 +352,7 @@ async function handleFileUpload(file) {
 
         if (!response.ok) {
             throw new Error(`Erreur d'upload: ${response.statusText}`);
-        }
+    }
 
         const fileInfo = await response.json(); // { url, originalname, mimetype, size }
 
@@ -550,16 +550,22 @@ socket.on('stop_typing', (data) => {
 socket.on('delete_message', (data) => {
     if (data.forEveryone) {
         const msgElem = document.getElementById(data.messageId);
-        if (msgElem) msgElem.remove();
+        if (msgElem) {
+            // Au lieu de supprimer le message, on le marque comme supprimé
+            const sender = msgElem.querySelector('.message-sender').textContent;
+            const time = msgElem.querySelector('.message-time').textContent;
+            msgElem.remove();
+            addMessageToChat(sender, '', sender === currentUser, null, data.messageId, true);
 
-        // Retirer également du stockage côté client
-        if (chatMessages.has(data.from)) {
-            let messages = chatMessages.get(data.from);
-            chatMessages.set(data.from, messages.filter(msg => msg.id !== data.messageId));
-        }
-        if (chatMessages.has(data.to)) {
-            let messages = chatMessages.get(data.to);
-            chatMessages.set(data.to, messages.filter(msg => msg.id !== data.messageId));
+            // Retirer du stockage côté client
+            if (chatMessages.has(data.from)) {
+                let messages = chatMessages.get(data.from);
+                chatMessages.set(data.from, messages.filter(msg => msg.id !== data.messageId));
+            }
+            if (chatMessages.has(data.to)) {
+                let messages = chatMessages.get(data.to);
+                chatMessages.set(data.to, messages.filter(msg => msg.id !== data.messageId));
+            }
         }
     }
 }); 

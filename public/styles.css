@@ -692,3 +692,16 @@ body {
     width: 20px;
     text-align: center;
 }
+
+.message p i {
+    font-style: italic;
+    opacity: 0.7;
+}
+
+.message.deleted {
+    opacity: 0.7;
+}
+
+.message.deleted .message-content-row {
+    pointer-events: none;
+}
