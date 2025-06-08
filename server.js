@@ -48,7 +48,8 @@ io.on('connection', (socket) => {
                 text: data.text,
                 timestamp: data.timestamp || new Date().toISOString(),
                 replyTo: data.replyTo || null,
-                id: data.id
+                id: data.id,
+                file: data.file || null
             });
             console.log(`Message envoyé de ${data.from} à ${data.to}`);
         }
