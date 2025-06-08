@@ -657,17 +657,33 @@ function deleteMessage(messageId, forEveryone) {
             forEveryone: true
         });
 
-        // Supprimer le message de l'historique local immédiatement
+        // Remplacer le contenu du message par "Ce message a été supprimé"
+        const contentRow = messageElement.querySelector('.message-content-row');
+        if (contentRow) {
+            contentRow.innerHTML = `
+                <div style="flex:1;min-width:0;">
+                    <p style="margin:0;font-style:italic;color:var(--text-secondary);">
+                        Ce message a été supprimé
+                    </p>
+                </div>
+            `;
+        }
+        messageElement.classList.add('deleted');
+
+        // Mettre à jour l'historique local
         if (chatMessages.has(selectedContact)) {
             const messages = chatMessages.get(selectedContact);
-            const index = messages.findIndex(msg => msg.id === messageId);
-            if (index !== -1) {
-                messages.splice(index, 1);
+            const message = messages.find(msg => msg.id === messageId);
+            if (message) {
+                message.deleted = true;
+                message.originalContent = {
+                    text: message.text,
+                    file: message.file
+                };
+                message.text = "Ce message a été supprimé";
+                message.file = null;
             }
         }
-
-        // Supprimer l'élément du DOM immédiatement
-        messageElement.remove();
     } else {
         // Suppression locale uniquement
         messageElement.remove();
@@ -683,7 +699,7 @@ function deleteMessage(messageId, forEveryone) {
     }
 }
 
-// Gestionnaire pour la suppression de message
+// Modifier la fonction de gestion des messages supprimés
 socket.on('delete_message', (data) => {
     const { messageId, forEveryone, from } = data;
     const messageElement = document.getElementById(messageId);
@@ -701,9 +717,22 @@ socket.on('delete_message', (data) => {
                     </div>
                 `;
             }
-        } else {
-            // Suppression locale
-            messageElement.remove();
+            messageElement.classList.add('deleted');
+
+            // Mettre à jour l'historique local
+            if (chatMessages.has(from)) {
+                const messages = chatMessages.get(from);
+                const message = messages.find(msg => msg.id === messageId);
+                if (message) {
+                    message.deleted = true;
+                    message.originalContent = {
+                        text: message.text,
+                        file: message.file
+                    };
+                    message.text = "Ce message a été supprimé";
+                    message.file = null;
+                }
+            }
         }
     }
 });
@@ -717,29 +746,55 @@ function restoreMessage(messageId) {
     if (chatMessages.has(selectedContact)) {
         const messages = chatMessages.get(selectedContact);
         const message = messages.find(msg => msg.id === messageId);
-        if (message) {
+        if (message && message.originalContent) {
             // Restaurer le contenu du message
             const contentRow = messageElement.querySelector('.message-content-row');
             if (contentRow) {
-                if (message.file) {
+                if (message.originalContent.file) {
                     // Restaurer un message avec fichier
                     contentRow.innerHTML = `
-                        <div class="message-content">
-                            <span class="message-sender">${message.from}</span>
-                            ${getFileContent(message.file)}
+                        <div style="flex:1;min-width:0;">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <span class="message-sender" style="font-size:1rem;">${message.from}</span>
+                            </div>
+                            ${getFileContent(message.originalContent.file)}
                         </div>
+                        <button class="message-menu-button"><i class="fas fa-ellipsis-v"></i></button>
                     `;
                 } else {
                     // Restaurer un message texte
                     contentRow.innerHTML = `
-                        <div class="message-content">
-                            <span class="message-sender">${message.from}</span>
-                            <p>${message.text}</p>
+                        <div style="flex:1;min-width:0;">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <span class="message-sender" style="font-size:1rem;">${message.from}</span>
+                            </div>
+                            <p style="margin:4px 0 0 0;word-break:break-word;">${message.originalContent.text}</p>
                         </div>
+                        <button class="message-menu-button"><i class="fas fa-ellipsis-v"></i></button>
                     `;
                 }
             }
             messageElement.classList.remove('deleted');
+
+            // Restaurer le message dans l'historique
+            message.text = message.originalContent.text;
+            message.file = message.originalContent.file;
+            message.deleted = false;
+            delete message.originalContent;
+
+            // Réajouter le gestionnaire d'événements pour le menu contextuel
+            const menuBtn = messageElement.querySelector('.message-menu-button');
+            if (menuBtn) {
+                menuBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const existingMenu = document.getElementById('messageContextMenu');
+                    if (existingMenu && existingMenu.dataset.messageId === messageId) {
+                        existingMenu.remove();
+                    } else {
+                        showContextMenu(e, messageId, message.from, message.text, message.from === currentUser, message.file);
+                    }
+                });
+            }
         }
     }
 }
