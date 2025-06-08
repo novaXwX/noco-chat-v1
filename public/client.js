@@ -349,12 +349,6 @@ function addFileToChat(sender, fileData, isOutgoing = false, messageId = null) {
     let fileContent = '';
     if (fileData.type.startsWith('image/')) {
         fileContent = `<img src="${fileData.url}" alt="${fileData.name}" class="message-image" onclick="openMediaViewer(this.src)">`;
-    } else if (fileData.type.startsWith('video/')) {
-        fileContent = `
-            <video controls class="message-video">
-                <source src="${fileData.url}" type="${fileData.type}">
-                Votre navigateur ne supporte pas la lecture de vidéos.
-            </video>`;
     } else {
         fileContent = `<a href="${fileData.url}" download="${fileData.name}" class="message-file">
             <i class="fas fa-file"></i> ${fileData.name}

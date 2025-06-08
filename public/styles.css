@@ -509,12 +509,6 @@ body {
     transform: scale(1.02);
 }
 
-.message-video {
-    max-width: 300px;
-    max-height: 300px;
-    border-radius: 8px;
-}
-
 .message-file {
     display: inline-flex;
     align-items: center;
