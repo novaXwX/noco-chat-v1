@@ -107,24 +107,32 @@ io.on('connection', (socket) => {
         const { messageId, to, from, forEveryone } = data;
         
         if (forEveryone) {
-            // Envoyer la notification de suppression à tous les destinataires
-            const recipientSocket = connectedUsers.get(to);
-            if (recipientSocket) {
-                io.to(recipientSocket).emit('delete_message', {
-                    messageId: messageId,
-                    forEveryone: true,
-                    from: from
-                });
-            }
-            
+            // Trouver le socket ID de l'expéditeur
+            const senderSocketId = Array.from(connectedUsers.entries())
+                .find(([id, username]) => username === from)?.[0];
+
+            // Trouver le socket ID du destinataire
+            const recipientSocketId = Array.from(connectedUsers.entries())
+                .find(([id, username]) => username === to)?.[0];
+
             // Envoyer la notification de suppression à l'expéditeur
-            const senderSocket = connectedUsers.get(from);
-            if (senderSocket) {
-                io.to(senderSocket).emit('delete_message', {
+            if (senderSocketId) {
+                io.to(senderSocketId).emit('delete_message', {
                     messageId: messageId,
                     forEveryone: true,
                     from: from
                 });
+                console.log(`Notification de suppression du message ${messageId} envoyée à l'expéditeur ${from} (${senderSocketId})`);
+            }
+
+            // Envoyer la notification de suppression au destinataire
+            if (recipientSocketId) {
+                io.to(recipientSocketId).emit('delete_message', {
+                    messageId: messageId,
+                    forEveryone: true,
+                    from: from
+                });
+                console.log(`Notification de suppression du message ${messageId} envoyée au destinataire ${to} (${recipientSocketId})`);
             }
         }
     });

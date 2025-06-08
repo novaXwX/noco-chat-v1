@@ -733,21 +733,53 @@ body {
     text-align: center;
 }
 
-/* Style pour les messages supprimés */
+/* Styles pour les messages supprimés */
 .message.deleted {
-    opacity: 0.7;
+    background-color: var(--bg-message-deleted);
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-style: italic;
+    color: var(--text-secondary);
+    opacity: 0.9;
+    margin: 5px 0;
+}
+
+.message.deleted .deleted-icon {
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+.message.deleted .deleted-text {
+    margin: 0;
 }
 
 .message.deleted .message-content-row {
-    background: var(--bg-sidebar);
-    padding: 8px 12px;
-    border-radius: 8px;
+    /* Override previous styles for content row */
+    background: none;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.message.deleted .message-content-row p {
-    font-style: italic;
-    color: var(--text-secondary);
-    margin: 0;
+.message.deleted .message-time {
+    display: none; /* Hide time for deleted messages */
+}
+
+/* Styles pour les messages supprimés qui étaient sortants (envoyés par l'utilisateur courant) */
+.message.deleted.outgoing {
+    background-color: var(--bg-message-outgoing-deleted);
+    align-self: flex-end;
+}
+
+/* Styles pour les messages supprimés qui étaient entrants (reçus par l'utilisateur courant) */
+.message.deleted.incoming {
+    background-color: var(--bg-message-incoming-deleted);
+    align-self: flex-start;
 }
 
 /* Animation pour la restauration de message */

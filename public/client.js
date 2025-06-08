@@ -82,6 +82,126 @@ function renderContacts(searchTerm = '') {
     });
 }
 
+// Nouvelle fonction pour rendre un seul élément de message, gérant tous les types et états
+function renderSingleMessage(messageData) {
+    const messageElement = document.createElement('div');
+    messageElement.className = `message ${messageData.from === currentUser ? 'outgoing' : 'incoming'}`;
+    messageElement.id = messageData.id;
+
+    let messageContentHtml = '';
+    const isDeleted = messageData.deleted;
+
+    if (isDeleted) {
+        messageContentHtml = `
+            <div class="message-content-row deleted-message-display">
+                <i class="fas fa-ban deleted-icon"></i>
+                <p class="deleted-text">Ce message a été supprimé.</p>
+            </div>
+        `;
+        messageElement.classList.add('deleted');
+    } else if (messageData.file) {
+        let fileContent = '';
+        if (messageData.file.type.startsWith('image/')) {
+            fileContent = `
+                <div class="message-media">
+                    <img src="${messageData.file.url}" alt="${messageData.file.name}" class="message-image" onclick="openMediaViewer(this.src)">
+                    <div class="file-info">
+                        <span class="file-name">${messageData.file.name}</span>
+                        <span class="file-size">${formatFileSize(messageData.file.size)}</span>
+                    </div>
+                </div>`;
+        } else if (messageData.file.type.startsWith('video/')) {
+            fileContent = `
+                <div class="message-media">
+                    <video controls class="message-video">
+                        <source src="${messageData.file.url}" type="${messageData.file.type}">
+                        Votre navigateur ne supporte pas la lecture de vidéos.
+                    </video>
+                    <div class="file-info">
+                        <span class="file-name">${messageData.file.name}</span>
+                        <span class="file-size">${formatFileSize(messageData.file.size)}</span>
+                    </div>
+                </div>`;
+        } else {
+            fileContent = `
+                <div class="message-file">
+                    <i class="fas fa-file"></i>
+                    <div class="file-info">
+                        <span class="file-name">${messageData.file.name}</span>
+                        <span class="file-size">${formatFileSize(messageData.file.size)}</span>
+                    </div>
+                </div>`;
+        }
+
+        let replyHtml = '';
+        if (messageData.replyTo) {
+            replyHtml = `
+                <div class="message-reply-preview">
+                    <span class="reply-sender">${messageData.replyTo.sender}</span>
+                    <p class="reply-content">${messageData.replyTo.text}</p>
+                </div>
+            `;
+        }
+
+        messageContentHtml = `
+            ${replyHtml}
+            <div class="message-content-row" style="display:flex;align-items:flex-start;justify-content:space-between;">
+                <div style="flex:1;min-width:0;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span class="message-sender" style="font-size:1rem;">${messageData.from}</span>
+                    </div>
+                    ${fileContent}
+                </div>
+                <button class="message-menu-button"><i class="fas fa-ellipsis-v"></i></button>
+            </div>
+            <span class="message-time" style="display:block;text-align:right;margin-top:2px;opacity:0.7;">${new Date(messageData.timestamp).toLocaleTimeString()}</span>
+        `;
+    } else {
+        let replyHtml = '';
+        if (messageData.replyTo) {
+            replyHtml = `
+                <div class="message-reply-preview">
+                    <span class="reply-sender">${messageData.replyTo.sender}</span>
+                    <p class="reply-content">${messageData.replyTo.text}</p>
+                </div>
+            `;
+        }
+        
+        messageContentHtml = `
+            ${replyHtml}
+            <div class="message-content-row" style="display:flex;align-items:flex-start;justify-content:space-between;">
+                <div style="flex:1;min-width:0;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span class="message-sender" style="font-size:1rem;">${messageData.from}</span>
+                    </div>
+                    <p style="margin:4px 0 0 0;word-break:break-word;">${messageData.text}</p>
+                </div>
+                <button class="message-menu-button"><i class="fas fa-ellipsis-v"></i></button>
+            </div>
+            <span class="message-time" style="display:block;text-align:right;margin-top:2px;opacity:0.7;">${new Date(messageData.timestamp).toLocaleTimeString()}</span>
+        `;
+    }
+
+    messageElement.innerHTML = messageContentHtml;
+
+    if (!isDeleted) {
+        const menuBtn = messageElement.querySelector('.message-menu-button');
+        if (menuBtn) {
+            menuBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const existingMenu = document.getElementById('messageContextMenu');
+                if (existingMenu && existingMenu.dataset.messageId === messageData.id) {
+                    existingMenu.remove(); 
+                } else {
+                    showContextMenu(e, messageData.id, messageData.from, messageData.text, messageData.from === currentUser, messageData.file);
+                }
+            });
+        }
+    }
+
+    return messageElement;
+}
+
 function selectContact(contact) {
     selectedContact = contact;
     chatTitle.textContent = contact;
@@ -89,18 +209,16 @@ function selectContact(contact) {
     renderContacts(searchInput.value);
     messagesList.innerHTML = '';
 
-    // Charger et afficher tous les messages pour le contact nouvellement sélectionné
     if (chatMessages.has(contact) && chatMessages.get(contact).length > 0) {
         const messagesForContact = chatMessages.get(contact);
         messagesForContact.forEach(msg => {
-            // Déterminer si le message est sortant du point de vue de currentUser
-            const isOutgoing = msg.from === currentUser;
-            addMessageToChat(msg.from, msg.text, isOutgoing, msg.replyTo, msg.id);
+            const messageElement = renderSingleMessage(msg);
+            messagesList.appendChild(messageElement);
         });
     } else {
-        // Si le chat est vide, afficher le message d'introduction
         displayIntroductoryMessage();
     }
+    messagesList.scrollTop = messagesList.scrollHeight;
 }
 
 // Fonction pour afficher le message d'introduction
@@ -301,26 +419,28 @@ messageForm.addEventListener('submit', (e) => {
             from: currentUser,
             to: selectedContact,
             text: message,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            deleted: false
         };
 
         if (currentReplyMessage) {
             messageData.replyTo = currentReplyMessage;
-            currentReplyMessage = null; // Réinitialiser après l'envoi
+            currentReplyMessage = null;
             document.getElementById('replyPreview')?.remove();
         }
 
         socket.emit('private_message', messageData);
         
-        // Stocker le message pour l'expéditeur (dans son propre historique de chat)
         if (!chatMessages.has(selectedContact)) {
             chatMessages.set(selectedContact, []);
         }
         chatMessages.get(selectedContact).push(messageData);
 
-        addMessageToChat(currentUser, message, true, messageData.replyTo, messageId);
+        const messageElement = renderSingleMessage(messageData);
+        messagesList.appendChild(messageElement);
         messageInput.value = '';
-        hideIntroductoryMessage(); // Masquer le message d'introduction après le premier message
+        hideIntroductoryMessage();
+        messagesList.scrollTop = messagesList.scrollHeight;
     }
 });
 
@@ -355,20 +475,17 @@ socket.on('connected_users', (users) => {
 });
 
 socket.on('private_message', (data) => {
-    // Stocker le message entrant pour le destinataire (dans son propre historique de chat)
     if (!chatMessages.has(data.from)) {
         chatMessages.set(data.from, []);
     }
     chatMessages.get(data.from).push(data);
 
-    if (data.file) {
-        addFileToChat(data.from, data.file, data.from === currentUser);
-    } else if (data.from === selectedContact || data.from === currentUser) {
-        // Afficher le message uniquement si le contact actuel est l'expéditeur OU si c'est son propre message (pour l'écho)
-        addMessageToChat(data.from, data.text, data.from === currentUser, data.replyTo, data.id);
-        hideIntroductoryMessage(); // Masquer le message d'introduction après le premier message
+    if (data.from === selectedContact || data.from === currentUser) {
+        const messageElement = renderSingleMessage(data);
+        messagesList.appendChild(messageElement);
+        hideIntroductoryMessage();
+        messagesList.scrollTop = messagesList.scrollHeight;
     } else {
-        // Si c'est un message entrant pour un autre chat, marquer comme non lu
         unreadMessages.add(data.from);
         renderContacts(searchInput.value);
     }
@@ -378,13 +495,11 @@ socket.on('private_message', (data) => {
 async function handleFileUpload(file) {
     if (!file) return;
 
-    // Vérifier la taille du fichier (50MB max)
     if (file.size > 50 * 1024 * 1024) {
         alert('Le fichier est trop volumineux. Taille maximale: 50MB');
         return;
     }
 
-    // Vérifier le type de fichier
     if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
         alert('Type de fichier non supporté. Seules les images et vidéos sont acceptées.');
         return;
@@ -417,7 +532,8 @@ async function handleFileUpload(file) {
                 type: fileInfo.mimetype,
                 size: fileInfo.size
             },
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            deleted: false
         };
 
         socket.emit('private_message', messageData);
@@ -427,8 +543,10 @@ async function handleFileUpload(file) {
         }
         chatMessages.get(selectedContact).push(messageData);
 
-        addFileToChat(currentUser, messageData.file, true, messageId);
+        const messageElement = renderSingleMessage(messageData);
+        messagesList.appendChild(messageElement);
         hideIntroductoryMessage();
+        messagesList.scrollTop = messagesList.scrollHeight;
 
     } catch (error) {
         console.error("Erreur lors de l'envoi du fichier:", error);
@@ -649,7 +767,6 @@ function deleteMessage(messageId, forEveryone) {
     if (!messageElement) return;
 
     if (forEveryone) {
-        // Envoyer la demande de suppression au serveur
         socket.emit('delete_message', {
             messageId: messageId,
             to: selectedContact,
@@ -657,38 +774,24 @@ function deleteMessage(messageId, forEveryone) {
             forEveryone: true
         });
 
-        // Remplacer le contenu du message par "Ce message a été supprimé"
-        const contentRow = messageElement.querySelector('.message-content-row');
-        if (contentRow) {
-            contentRow.innerHTML = `
-                <div style="flex:1;min-width:0;">
-                    <p style="margin:0;font-style:italic;color:var(--text-secondary);">
-                        Ce message a été supprimé
-                    </p>
-                </div>
-            `;
+        const messageData = chatMessages.get(selectedContact)?.find(msg => msg.id === messageId);
+        if (messageData) {
+            messageData.deleted = true;
+            messageData.originalContent = {
+                text: messageData.text,
+                file: messageData.file
+            };
+            messageData.text = "Ce message a été supprimé";
+            messageData.file = null;
         }
-        messageElement.classList.add('deleted');
 
-        // Mettre à jour l'historique local
-        if (chatMessages.has(selectedContact)) {
-            const messages = chatMessages.get(selectedContact);
-            const message = messages.find(msg => msg.id === messageId);
-            if (message) {
-                message.deleted = true;
-                message.originalContent = {
-                    text: message.text,
-                    file: message.file
-                };
-                message.text = "Ce message a été supprimé";
-                message.file = null;
-            }
-        }
+        const updatedMessageElement = renderSingleMessage(messageData);
+        messageElement.replaceWith(updatedMessageElement);
+        messagesList.scrollTop = messagesList.scrollHeight;
+
     } else {
-        // Suppression locale uniquement
         messageElement.remove();
         
-        // Supprimer le message de l'historique local
         if (chatMessages.has(selectedContact)) {
             const messages = chatMessages.get(selectedContact);
             const index = messages.findIndex(msg => msg.id === messageId);
@@ -704,35 +807,24 @@ socket.on('delete_message', (data) => {
     const { messageId, forEveryone, from } = data;
     const messageElement = document.getElementById(messageId);
     
-    if (messageElement) {
-        if (forEveryone) {
-            // Remplacer le contenu du message par "Ce message a été supprimé"
-            const contentRow = messageElement.querySelector('.message-content-row');
-            if (contentRow) {
-                contentRow.innerHTML = `
-                    <div style="flex:1;min-width:0;">
-                        <p style="margin:0;font-style:italic;color:var(--text-secondary);">
-                            Ce message a été supprimé
-                        </p>
-                    </div>
-                `;
-            }
-            messageElement.classList.add('deleted');
+    if (messageElement && forEveryone) {
+        const contactToUpdate = (from === currentUser) ? selectedContact : from;
 
-            // Mettre à jour l'historique local
-            const contactToUpdate = from === currentUser ? selectedContact : from;
-            if (chatMessages.has(contactToUpdate)) {
-                const messages = chatMessages.get(contactToUpdate);
-                const message = messages.find(msg => msg.id === messageId);
-                if (message) {
-                    message.deleted = true;
-                    message.originalContent = {
-                        text: message.text,
-                        file: message.file
-                    };
-                    message.text = "Ce message a été supprimé";
-                    message.file = null;
-                }
+        if (chatMessages.has(contactToUpdate)) {
+            const messages = chatMessages.get(contactToUpdate);
+            const message = messages.find(msg => msg.id === messageId);
+            if (message) {
+                message.deleted = true;
+                message.originalContent = {
+                    text: message.text,
+                    file: message.file
+                };
+                message.text = "Ce message a été supprimé";
+                message.file = null;
+                
+                const updatedMessageElement = renderSingleMessage(message);
+                messageElement.replaceWith(updatedMessageElement);
+                messagesList.scrollTop = messagesList.scrollHeight;
             }
         }
     }
@@ -743,59 +835,19 @@ function restoreMessage(messageId) {
     const messageElement = document.getElementById(messageId);
     if (!messageElement) return;
 
-    // Récupérer le message original depuis l'historique
     if (chatMessages.has(selectedContact)) {
         const messages = chatMessages.get(selectedContact);
         const message = messages.find(msg => msg.id === messageId);
         if (message && message.originalContent) {
-            // Restaurer le contenu du message
-            const contentRow = messageElement.querySelector('.message-content-row');
-            if (contentRow) {
-                if (message.originalContent.file) {
-                    // Restaurer un message avec fichier
-                    contentRow.innerHTML = `
-                        <div style="flex:1;min-width:0;">
-                            <div style="display:flex;align-items:center;gap:8px;">
-                                <span class="message-sender" style="font-size:1rem;">${message.from}</span>
-                            </div>
-                            ${getFileContent(message.originalContent.file)}
-                        </div>
-                        <button class="message-menu-button"><i class="fas fa-ellipsis-v"></i></button>
-                    `;
-                } else {
-                    // Restaurer un message texte
-                    contentRow.innerHTML = `
-                        <div style="flex:1;min-width:0;">
-                            <div style="display:flex;align-items:center;gap:8px;">
-                                <span class="message-sender" style="font-size:1rem;">${message.from}</span>
-                            </div>
-                            <p style="margin:4px 0 0 0;word-break:break-word;">${message.originalContent.text}</p>
-                        </div>
-                        <button class="message-menu-button"><i class="fas fa-ellipsis-v"></i></button>
-                    `;
-                }
-            }
-            messageElement.classList.remove('deleted');
-
-            // Restaurer le message dans l'historique
             message.text = message.originalContent.text;
             message.file = message.originalContent.file;
             message.deleted = false;
             delete message.originalContent;
 
-            // Réajouter le gestionnaire d'événements pour le menu contextuel
-            const menuBtn = messageElement.querySelector('.message-menu-button');
-            if (menuBtn) {
-                menuBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const existingMenu = document.getElementById('messageContextMenu');
-                    if (existingMenu && existingMenu.dataset.messageId === messageId) {
-                        existingMenu.remove();
-                    } else {
-                        showContextMenu(e, messageId, message.from, message.text, message.from === currentUser, message.file);
-                    }
-                });
-            }
+            const updatedMessageElement = renderSingleMessage(message);
+            messageElement.replaceWith(updatedMessageElement);
+            messagesList.scrollTop = messagesList.scrollHeight;
+            updatedMessageElement.classList.add('restored');
         }
     }
 }
