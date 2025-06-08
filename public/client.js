@@ -88,7 +88,7 @@ function displayIntroductoryMessage() {
     introMessageElement.id = 'introMessage';
     introMessageElement.className = 'introductory-message';
     introMessageElement.innerHTML = `
-        <i class="fas fa-lock"></i> Le message que vous enverrez ne sera pas vu par le correspondant. Il sera affiché seulement par une notification pour signaler que vous souhaitez commencer une discussion.
+        <i class="fas fa-lock"></i> Les messages échangés sont éphémères et chiffrés de bout en bout. Seuls les deux correspondants peuvent les consulter. Une fois la connexion terminée, tous les messages sont supprimés pour assurer une confidentialité totale.
     `;
     messagesList.appendChild(introMessageElement);
     messagesList.scrollTop = messagesList.scrollHeight;
