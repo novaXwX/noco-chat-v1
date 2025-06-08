@@ -93,7 +93,8 @@ io.on('connection', (socket) => {
         if (targetSocketId) {
             io.to(targetSocketId).emit('private_message', {
                 from: data.from,
-                text: data.text
+                text: data.text,
+                file: data.file || null
             });
         }
     });
