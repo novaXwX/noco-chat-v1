@@ -5,6 +5,7 @@ let contacts = [];
 let unreadMessages = new Set();
 let fileToUpload = null;
 let currentReplyMessage = null;
+let chatMessages = new Map(); // Pour stocker les messages par contact
 
 // Éléments DOM
 const pseudoForm = document.getElementById('pseudoForm');
@@ -14,15 +15,9 @@ const messageInput = document.getElementById('messageInput');
 const messagesList = document.getElementById('messages');
 const contactsList = document.getElementById('contacts');
 const chatTitle = document.getElementById('chatTitle');
-const settingsBtn = document.getElementById('settingsBtn');
-const settingsModal = document.getElementById('settingsModal');
-const closeSettings = document.getElementById('closeSettings');
-const toggleTheme = document.getElementById('toggleTheme');
 const searchInput = document.getElementById('searchContacts');
 const dropZone = document.getElementById('dropZone');
 const chatHeader = document.querySelector('.chat-header');
-const emojiBtn = document.getElementById('emojiBtn');
-const emojiPicker = document.getElementById('emojiPicker');
 
 // Connexion Socket.IO
 const socket = io();
@@ -57,11 +52,11 @@ function renderContacts(searchTerm = '') {
         contactElement.className = `contact ${contact === selectedContact ? 'selected' : ''}`;
         contactElement.innerHTML = `
             <div class="contact-info">
-                <span class="contact-name">${contact}</span>
+                <div class="contact-name">${contact}</div>
             </div>
             <div class="notification-badge ${unreadMessages.has(contact) ? 'active' : ''}"></div>
         `;
-        contactElement.addEventListener('click', () => selectContact(contact));
+        contactElement.onclick = () => selectContact(contact);
         contactsList.appendChild(contactElement);
     });
 }
@@ -72,6 +67,40 @@ function selectContact(contact) {
     unreadMessages.delete(contact);
     renderContacts(searchInput.value);
     messagesList.innerHTML = '';
+
+    // Charger et afficher tous les messages pour le contact nouvellement sélectionné
+    if (chatMessages.has(contact) && chatMessages.get(contact).length > 0) {
+        const messagesForContact = chatMessages.get(contact);
+        messagesForContact.forEach(msg => {
+            // Déterminer si le message est sortant du point de vue de currentUser
+            const isOutgoing = msg.from === currentUser;
+            addMessageToChat(msg.from, msg.text, isOutgoing, msg.replyTo, msg.id);
+        });
+    } else {
+        // Si le chat est vide, afficher le message d'introduction
+        displayIntroductoryMessage();
+    }
+}
+
+// Fonction pour afficher le message d'introduction
+function displayIntroductoryMessage() {
+    const introMessageElement = document.createElement('div');
+    introMessageElement.id = 'introMessage';
+    introMessageElement.className = 'introductory-message';
+    introMessageElement.innerHTML = `
+        <i class="fas fa-lock"></i> Messages et appels sont chiffrés de bout en bout.
+        Seules les personnes de ce chat peuvent les lire, les écouter ou les partager.
+    `;
+    messagesList.appendChild(introMessageElement);
+    messagesList.scrollTop = messagesList.scrollHeight;
+}
+
+// Fonction pour masquer le message d'introduction
+function hideIntroductoryMessage() {
+    const introMessageElement = document.getElementById('introMessage');
+    if (introMessageElement) {
+        introMessageElement.remove();
+    }
 }
 
 // Recherche de contacts
@@ -80,10 +109,9 @@ searchInput.addEventListener('input', (e) => {
 });
 
 // Affichage des messages
-function addMessageToChat(sender, text, isOutgoing = false, replyTo = null) {
+function addMessageToChat(sender, text, isOutgoing = false, replyTo = null, messageId = null) {
     const messageElement = document.createElement('div');
     messageElement.className = `message ${isOutgoing ? 'outgoing' : 'incoming'}`;
-    const messageId = 'msg-' + Date.now() + '-' + Math.floor(Math.random()*10000);
     messageElement.id = messageId;
 
     let replyHtml = '';
@@ -234,10 +262,13 @@ messageForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const message = messageInput.value.trim();
     if (message && selectedContact) {
+        const messageId = 'msg-' + Date.now() + '-' + Math.floor(Math.random()*10000);
         const messageData = {
+            id: messageId,
             from: currentUser,
             to: selectedContact,
-            text: message
+            text: message,
+            timestamp: new Date().toISOString()
         };
 
         if (currentReplyMessage) {
@@ -247,8 +278,16 @@ messageForm.addEventListener('submit', (e) => {
         }
 
         socket.emit('private_message', messageData);
-        addMessageToChat(currentUser, message, true, messageData.replyTo);
+        
+        // Stocker le message pour l'expéditeur (dans son propre historique de chat)
+        if (!chatMessages.has(selectedContact)) {
+            chatMessages.set(selectedContact, []);
+        }
+        chatMessages.get(selectedContact).push(messageData);
+
+        addMessageToChat(currentUser, message, true, messageData.replyTo, messageId);
         messageInput.value = '';
+        hideIntroductoryMessage(); // Masquer le message d'introduction après le premier message
     }
 });
 
@@ -274,11 +313,20 @@ socket.on('connected_users', (users) => {
 });
 
 socket.on('private_message', (data) => {
+    // Stocker le message entrant pour le destinataire (dans son propre historique de chat)
+    if (!chatMessages.has(data.from)) {
+        chatMessages.set(data.from, []);
+    }
+    chatMessages.get(data.from).push(data);
+
     if (data.file) {
         addFileToChat(data.from, data.file, data.from === currentUser);
     } else if (data.from === selectedContact || data.from === currentUser) {
-        addMessageToChat(data.from, data.text, data.from === currentUser, data.replyTo);
+        // Afficher le message uniquement si le contact actuel est l'expéditeur OU si c'est son propre message (pour l'écho)
+        addMessageToChat(data.from, data.text, data.from === currentUser, data.replyTo, data.id);
+        hideIntroductoryMessage(); // Masquer le message d'introduction après le premier message
     } else {
+        // Si c'est un message entrant pour un autre chat, marquer comme non lu
         unreadMessages.add(data.from);
         renderContacts(searchInput.value);
     }
@@ -288,51 +336,17 @@ socket.on('private_message', (data) => {
 socket.on('delete_message', (data) => {
     const msgElem = document.getElementById(data.messageId);
     if (msgElem) msgElem.remove();
+
+    // Retirer également du stockage côté client
+    if (chatMessages.has(data.from)) {
+        let messages = chatMessages.get(data.from);
+        chatMessages.set(data.from, messages.filter(msg => msg.id !== data.messageId));
+    }
+    if (chatMessages.has(data.to)) {
+        let messages = chatMessages.get(data.to);
+        chatMessages.set(data.to, messages.filter(msg => msg.id !== data.messageId));
+    }
 });
-
-// --- Gestion du thème ---
-function setTheme(theme) {
-    document.body.classList.remove('theme-dark', 'theme-light');
-    document.body.classList.add(theme);
-    localStorage.setItem('noco-theme', theme);
-    // Change l'icône de la roue
-    if (theme === 'theme-dark') {
-        toggleTheme.innerHTML = '<i class="fas fa-moon"></i> Thème clair';
-    } else {
-        toggleTheme.innerHTML = '<i class="fas fa-sun"></i> Thème sombre';
-    }
-}
-
-settingsBtn.onclick = () => {
-    settingsModal.style.display = 'flex';
-};
-closeSettings.onclick = () => {
-    settingsModal.style.display = 'none';
-};
-toggleTheme.onclick = () => {
-    if (document.body.classList.contains('theme-dark')) {
-        setTheme('theme-light');
-    } else {
-        setTheme('theme-dark');
-    }
-};
-
-// Fermer le modal si on clique en dehors
-window.onclick = (e) => {
-    if (e.target === settingsModal) {
-        settingsModal.style.display = 'none';
-    }
-};
-
-// Thème par défaut (sombre)
-(function () {
-    const saved = localStorage.getItem('noco-theme');
-    if (saved === 'theme-light' || saved === 'theme-dark') {
-        setTheme(saved);
-    } else {
-        setTheme('theme-dark');
-    }
-})();
 
 // --- Drag & Drop fichiers (affichage zone drop + upload) ---
 let dragCounter = 0;
@@ -441,36 +455,4 @@ socket.on('stop_typing', (data) => {
     if (data.from === selectedContact) {
         hideTypingIndicator();
     }
-});
-
-// --- Emoji Button (nouveau sélecteur d'emojis) ---
-if (window.EmojiButton) {
-    const picker = new EmojiButton({
-        position: 'top-start',
-        zIndex: 2000,
-        autoHide: false,
-        theme: document.body.classList.contains('theme-dark') ? 'dark' : 'light',
-    });
-    document.addEventListener('DOMContentLoaded', () => {
-        const emojiBtn = document.getElementById('emojiBtn');
-        const messageInput = document.getElementById('messageInput');
-        if (emojiBtn && messageInput) {
-            emojiBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                messageInput.focus();
-                emojiBtn.title = 'Astuce : utilise Windows + . pour ouvrir les emojis !';
-            });
-        }
-    });
-    picker.on('emoji', emoji => {
-        console.log('Emoji choisi :', emoji);
-        const input = document.getElementById('messageInput');
-        if (!input) return;
-        const start = input.selectionStart;
-        const end = input.selectionEnd;
-        const text = input.value;
-        input.value = text.slice(0, start) + emoji.emoji + text.slice(end);
-        input.focus();
-        input.selectionStart = input.selectionEnd = start + emoji.emoji.length;
-    });
-} 
+}); 
