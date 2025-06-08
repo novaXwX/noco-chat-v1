@@ -105,19 +105,27 @@ io.on('connection', (socket) => {
 
     socket.on('delete_message', (data) => {
         const { messageId, to, from, forEveryone } = data;
-        const targetSocketId = Array.from(connectedUsers.entries())
-            .find(([_, username]) => username === to)?.[0];
-
+        
         if (forEveryone) {
-            // Émettre la suppression pour tout le monde (expéditeur et destinataire)
-            socket.emit('delete_message', { messageId, forEveryone: true, from, to }); // Pour l'expéditeur
-            if (targetSocketId) {
-                io.to(targetSocketId).emit('delete_message', { messageId, forEveryone: true, from, to }); // Pour le destinataire
+            // Envoyer la notification de suppression à tous les destinataires
+            const recipientSocket = connectedUsers.get(to);
+            if (recipientSocket) {
+                io.to(recipientSocket).emit('delete_message', {
+                    messageId: messageId,
+                    forEveryone: true,
+                    from: from
+                });
             }
-            console.log(`Message ${messageId} supprimé pour tout le monde par ${from} de ${to}`);
-        } else {
-            // Si c'est juste pour soi, le client gère déjà la suppression locale, rien à faire côté serveur ici
-            console.log(`Message ${messageId} supprimé pour ${from} (localement)`);
+            
+            // Envoyer la notification de suppression à l'expéditeur
+            const senderSocket = connectedUsers.get(from);
+            if (senderSocket) {
+                io.to(senderSocket).emit('delete_message', {
+                    messageId: messageId,
+                    forEveryone: true,
+                    from: from
+                });
+            }
         }
     });
 

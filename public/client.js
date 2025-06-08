@@ -720,8 +720,9 @@ socket.on('delete_message', (data) => {
             messageElement.classList.add('deleted');
 
             // Mettre à jour l'historique local
-            if (chatMessages.has(from)) {
-                const messages = chatMessages.get(from);
+            const contactToUpdate = from === currentUser ? selectedContact : from;
+            if (chatMessages.has(contactToUpdate)) {
+                const messages = chatMessages.get(contactToUpdate);
                 const message = messages.find(msg => msg.id === messageId);
                 if (message) {
                     message.deleted = true;
