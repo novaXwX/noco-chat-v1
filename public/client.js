@@ -180,7 +180,7 @@ function addMessageToChat(sender, text, isOutgoing = false, replyTo = null, mess
 }
 
 // Fonction pour afficher le menu contextuel
-function showContextMenu(e, messageId, sender, text, isOutgoing) {
+function showContextMenu(e, messageId, sender, text, isOutgoing, fileData = null) {
     // Supprimer tout menu existant
     const existingMenu = document.getElementById('messageContextMenu');
     if (existingMenu) existingMenu.remove();
@@ -200,8 +200,12 @@ function showContextMenu(e, messageId, sender, text, isOutgoing) {
         const replyOption = document.createElement('button');
         replyOption.innerHTML = '<i class="fas fa-reply"></i> Répondre';
         replyOption.addEventListener('click', () => {
-            currentReplyMessage = { id: messageId, sender: sender, text: text };
-            displayReplyPreview(sender, text);
+            currentReplyMessage = { 
+                id: messageId, 
+                sender: sender, 
+                text: text || (fileData ? `[Fichier: ${fileData.name}]` : '')
+            };
+            displayReplyPreview(sender, text || (fileData ? `[Fichier: ${fileData.name}]` : ''));
             contextMenu.remove();
         });
         contextMenu.appendChild(replyOption);
@@ -470,15 +474,36 @@ function addFileToChat(sender, fileData, isOutgoing = false, messageId = null) {
             </div>`;
     }
 
+    // Ajouter le bouton de menu contextuel
+    const menuButton = `<button class="message-menu-button"><i class="fas fa-ellipsis-v"></i></button>`;
+
     messageElement.innerHTML = `
-        <div class="message-content-row">
-            <div class="message-content">
-                <span class="message-sender">${sender}</span>
+        <div class="message-content-row" style="display:flex;align-items:flex-start;justify-content:space-between;">
+            <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span class="message-sender" style="font-size:1rem;">${sender}</span>
+                </div>
                 ${fileContent}
             </div>
+            ${menuButton}
         </div>
-        <span class="message-time">${new Date().toLocaleTimeString()}</span>
+        <span class="message-time" style="display:block;text-align:right;margin-top:2px;opacity:0.7;">${new Date().toLocaleTimeString()}</span>
     `;
+
+    // Ajouter le gestionnaire d'événements pour le menu contextuel
+    const menuBtn = messageElement.querySelector('.message-menu-button');
+    if (menuBtn) {
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const existingMenu = document.getElementById('messageContextMenu');
+            if (existingMenu && existingMenu.dataset.messageId === messageId) {
+                existingMenu.remove();
+            } else {
+                showContextMenu(e, messageId, sender, null, isOutgoing, fileData);
+            }
+        });
+    }
+
     messagesList.appendChild(messageElement);
     messagesList.scrollTop = messagesList.scrollHeight;
 }
@@ -631,6 +656,18 @@ function deleteMessage(messageId, forEveryone) {
             from: currentUser,
             forEveryone: true
         });
+
+        // Supprimer le message de l'historique local immédiatement
+        if (chatMessages.has(selectedContact)) {
+            const messages = chatMessages.get(selectedContact);
+            const index = messages.findIndex(msg => msg.id === messageId);
+            if (index !== -1) {
+                messages.splice(index, 1);
+            }
+        }
+
+        // Supprimer l'élément du DOM immédiatement
+        messageElement.remove();
     } else {
         // Suppression locale uniquement
         messageElement.remove();
