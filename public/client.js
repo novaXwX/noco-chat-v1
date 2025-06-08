@@ -88,8 +88,7 @@ function displayIntroductoryMessage() {
     introMessageElement.id = 'introMessage';
     introMessageElement.className = 'introductory-message';
     introMessageElement.innerHTML = `
-        <i class="fas fa-lock"></i> Messages et appels sont chiffrés de bout en bout.
-        Seules les personnes de ce chat peuvent les lire, les écouter ou les partager.
+        <i class="fas fa-lock"></i> Le message que vous enverrez ne sera pas vu par le correspondant. Il sera affiché seulement par une notification pour signaler que vous souhaitez commencer une discussion.
     `;
     messagesList.appendChild(introMessageElement);
     messagesList.scrollTop = messagesList.scrollHeight;
