@@ -202,6 +202,26 @@ function showContextMenu(e, messageId, sender, text, isOutgoing) {
     });
     contextMenu.appendChild(replyOption);
 
+    // Option Supprimer pour moi
+    const deleteForMeOption = document.createElement('button');
+    deleteForMeOption.innerHTML = '<i class="fas fa-trash"></i> Supprimer pour moi';
+    deleteForMeOption.addEventListener('click', () => {
+        deleteMessage(messageId, false);
+        contextMenu.remove();
+    });
+    contextMenu.appendChild(deleteForMeOption);
+
+    // Option Supprimer pour tous (uniquement pour les messages sortants)
+    if (isOutgoing) {
+        const deleteForEveryoneOption = document.createElement('button');
+        deleteForEveryoneOption.innerHTML = '<i class="fas fa-trash-alt"></i> Supprimer pour tous';
+        deleteForEveryoneOption.addEventListener('click', () => {
+            deleteMessage(messageId, true);
+            contextMenu.remove();
+        });
+        contextMenu.appendChild(deleteForEveryoneOption);
+    }
+
     document.body.appendChild(contextMenu);
 
     // Fermer le menu si on clique ailleurs
@@ -520,5 +540,58 @@ socket.on('typing', (data) => {
 socket.on('stop_typing', (data) => {
     if (data.from === selectedContact) {
         hideTypingIndicator();
+    }
+});
+
+// Fonction pour supprimer un message
+function deleteMessage(messageId, forEveryone) {
+    const messageElement = document.getElementById(messageId);
+    if (!messageElement) return;
+
+    if (forEveryone) {
+        // Envoyer la demande de suppression au serveur
+        socket.emit('delete_message', {
+            messageId: messageId,
+            to: selectedContact,
+            from: currentUser,
+            forEveryone: true
+        });
+    } else {
+        // Suppression locale uniquement
+        messageElement.remove();
+        
+        // Supprimer le message de l'historique local
+        if (chatMessages.has(selectedContact)) {
+            const messages = chatMessages.get(selectedContact);
+            const index = messages.findIndex(msg => msg.id === messageId);
+            if (index !== -1) {
+                messages.splice(index, 1);
+            }
+        }
+    }
+}
+
+// Gestionnaire pour la suppression de message
+socket.on('delete_message', (data) => {
+    const { messageId, forEveryone, from } = data;
+    const messageElement = document.getElementById(messageId);
+    
+    if (messageElement) {
+        if (forEveryone) {
+            // Remplacer le contenu du message par "Ce message a été supprimé"
+            const contentRow = messageElement.querySelector('.message-content-row');
+            if (contentRow) {
+                contentRow.innerHTML = `
+                    <div style="flex:1;min-width:0;">
+                        <p style="margin:0;font-style:italic;color:var(--text-secondary);">
+                            Ce message a été supprimé
+                        </p>
+                    </div>
+                `;
+            }
+        } else {
+            // Suppression locale
+            messageElement.remove();
+        }
     }
 }); 
