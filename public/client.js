@@ -22,19 +22,40 @@ const chatHeader = document.querySelector('.chat-header');
 // Connexion Socket.IO
 const socket = io();
 
+// Logs de connexion Socket.IO
+socket.on('connect', () => {
+    console.log('Connecté au serveur Socket.IO');
+    if (currentUser) {
+        socket.emit('user_connected', currentUser);
+    }
+});
+
+socket.on('connect_error', (error) => {
+    console.error('Erreur de connexion Socket.IO:', error);
+    alert('Erreur de connexion au serveur. Veuillez réessayer.');
+    pseudoForm.style.display = 'flex';
+    chatContainer.style.display = 'none';
+});
+
 // Entrée du pseudo
 pseudoForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const pseudo = document.getElementById('pseudo').value.trim();
     if (!pseudo) return alert('Veuillez entrer un pseudo !');
+    
+    if (!socket.connected) {
+        alert('Pas de connexion au serveur. Veuillez réessayer.');
+        return;
+    }
+    
+    console.log('Tentative de connexion avec le pseudo:', pseudo);
     currentUser = pseudo;
-    pseudoForm.style.display = 'none';
-    chatContainer.style.display = 'flex';
     socket.emit('user_connected', pseudo);
 });
 
 // Gérer l'événement de pseudo déjà pris
 socket.on('username_taken', (message) => {
+    console.log('Pseudo déjà pris:', message);
     alert(message);
     pseudoForm.style.display = 'flex'; // Réafficher le formulaire de pseudo
     chatContainer.style.display = 'none'; // Masquer le conteneur de chat
@@ -250,8 +271,15 @@ messageForm.addEventListener('submit', (e) => {
     }
 });
 
-// Gestion des sockets
+// Gérer la connexion réussie
+socket.on('connection_success', (username) => {
+    console.log('Connexion réussie pour:', username);
+    pseudoForm.style.display = 'none';
+    chatContainer.style.display = 'flex';
+});
+
 socket.on('user_connected', (username) => {
+    console.log('Utilisateur connecté:', username);
     if (!contacts.includes(username) && username !== currentUser) {
         contacts.push(username);
         renderContacts();
@@ -266,7 +294,9 @@ socket.on('user_disconnected', (username) => {
     }
 });
 
+// Gérer la liste des utilisateurs connectés
 socket.on('connected_users', (users) => {
+    console.log('Liste des utilisateurs connectés:', users);
     contacts = users.filter(user => user !== currentUser);
     renderContacts();
 });
@@ -306,9 +336,9 @@ async function handleFileUpload(file) {
 
         if (!response.ok) {
             throw new Error(`Erreur d'upload: ${response.statusText}`);
-    }
+        }
 
-        const fileInfo = await response.json(); // { url, originalname, mimetype, size }
+        const fileInfo = await response.json();
 
         const messageId = 'msg-' + Date.now() + '-' + Math.floor(Math.random()*10000);
         const messageData = {
@@ -326,7 +356,6 @@ async function handleFileUpload(file) {
 
         socket.emit('private_message', messageData);
         
-        // Stocker le message pour l'expéditeur
         if (!chatMessages.has(selectedContact)) {
             chatMessages.set(selectedContact, []);
         }
@@ -336,8 +365,8 @@ async function handleFileUpload(file) {
         hideIntroductoryMessage();
 
     } catch (error) {
-        console.error('Erreur lors de l'envoi du fichier:', error);
-        alert('Échec de l'envoi du fichier.');
+        console.error("Erreur lors de l'envoi du fichier:", error);
+        alert("Échec de l'envoi du fichier.");
     }
 }
 

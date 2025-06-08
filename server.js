@@ -34,24 +34,35 @@ io.on('connection', (socket) => {
     console.log('Nouvelle connexion socket:', socket.id);
 
     socket.on('user_connected', (username) => {
+        console.log(`Tentative de connexion avec le pseudo: ${username}`);
+        
         // Vérifier si le pseudo est déjà pris
         const isUsernameTaken = Array.from(connectedUsers.values()).includes(username);
 
         if (isUsernameTaken) {
+            console.log(`Pseudo '${username}' déjà pris, envoi du message d'erreur`);
             socket.emit('username_taken', 'Ce pseudo est déjà utilisé. Veuillez en choisir un autre.');
-            console.log(`Tentative de connexion avec le pseudo '${username}' déjà pris.`);
         } else {
+            console.log(`Pseudo '${username}' accepté, connexion établie`);
             connectedUsers.set(socket.id, username);
             socket.username = username;
+            
+            // Envoyer la confirmation de connexion au client
+            socket.emit('connection_success', username);
+            
+            // Informer tous les clients de la nouvelle connexion
             io.emit('user_connected', username);
+            
+            // Envoyer la liste mise à jour des utilisateurs
             const usersList = Array.from(new Set(connectedUsers.values()));
             io.emit('connected_users', usersList);
-            console.log(`${username} connecté. Total utilisateurs: ${usersList.length}`);
+            console.log(`Liste des utilisateurs connectés: ${usersList.join(', ')}`);
         }
     });
 
     socket.on('get_connected_users', () => {
         const usersList = Array.from(new Set(connectedUsers.values()));
+        console.log('Envoi de la liste des utilisateurs connectés:', usersList);
         socket.emit('connected_users', usersList);
     });
 
@@ -92,9 +103,11 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         const username = connectedUsers.get(socket.id);
         if (username) {
+            console.log(`Déconnexion de l'utilisateur: ${username}`);
             connectedUsers.delete(socket.id);
             io.emit('user_disconnected', username);
-            console.log(`${username} déconnecté. Total utilisateurs: ${connectedUsers.size}`);
+            const usersList = Array.from(new Set(connectedUsers.values()));
+            console.log(`Liste des utilisateurs restants: ${usersList.join(', ')}`);
         }
     });
 });
