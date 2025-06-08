@@ -6,25 +6,46 @@ const io = require('socket.io')(http, {
 });
 const cors = require('cors');
 const path = require('path');
-const multer = require('multer'); // Ajout de multer
+const multer = require('multer');
+const fs = require('fs');
 
 // Middleware
 app.use(cors());
-app.use(express.json({ limit: '50mb' })); // Augmenter la limite pour les fichiers volumineux
+app.use(express.json({ limit: '50mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Servir les fichiers uploadés
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+
+// Créer le dossier uploads s'il n'existe pas
+const uploadsDir = path.join(__dirname, 'public', 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 // Configuration de multer pour l'upload
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, path.join(__dirname, 'public', 'uploads')); // Chemin de destination des uploads
+        cb(null, uploadsDir);
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + '-' + file.originalname); // Nom de fichier unique
+        cb(null, uniqueSuffix + '-' + file.originalname);
     }
 });
-const upload = multer({ storage: storage });
+
+const upload = multer({ 
+    storage: storage,
+    limits: {
+        fileSize: 50 * 1024 * 1024 // 50MB max
+    },
+    fileFilter: function (req, file, cb) {
+        // Accepter les images et vidéos
+        if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Type de fichier non supporté. Seules les images et vidéos sont acceptées.'));
+        }
+    }
+});
 
 // Stockage en mémoire des utilisateurs connectés
 const connectedUsers = new Map(); // Map des utilisateurs connectés { socketId: username }
@@ -112,19 +133,32 @@ io.on('connection', (socket) => {
     });
 });
 
-// Route d'upload de fichiers (POST /upload)
+// Route d'upload de fichiers
 app.post('/upload', upload.single('file'), (req, res) => {
     if (!req.file) {
         console.error('Erreur d\'upload: Aucun fichier reçu');
         return res.status(400).json({ error: 'Aucun fichier reçu' });
     }
+
     console.log(`Fichier reçu: ${req.file.originalname} (${req.file.size} octets, ${req.file.mimetype})`);
+    
     res.json({
         url: `/uploads/${req.file.filename}`,
         originalname: req.file.originalname,
         mimetype: req.file.mimetype,
         size: req.file.size
     });
+});
+
+// Gestion des erreurs d'upload
+app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({ error: 'Le fichier est trop volumineux. Taille maximale: 50MB' });
+        }
+        return res.status(400).json({ error: err.message });
+    }
+    next(err);
 });
 
 // Route par défaut

@@ -345,6 +345,18 @@ socket.on('private_message', (data) => {
 async function handleFileUpload(file) {
     if (!file) return;
 
+    // Vérifier la taille du fichier (50MB max)
+    if (file.size > 50 * 1024 * 1024) {
+        alert('Le fichier est trop volumineux. Taille maximale: 50MB');
+        return;
+    }
+
+    // Vérifier le type de fichier
+    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+        alert('Type de fichier non supporté. Seules les images et vidéos sont acceptées.');
+        return;
+    }
+
     const formData = new FormData();
     formData.append('file', file);
 
@@ -355,7 +367,8 @@ async function handleFileUpload(file) {
         });
 
         if (!response.ok) {
-            throw new Error(`Erreur d'upload: ${response.statusText}`);
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Erreur d'upload: ${response.statusText}`);
         }
 
         const fileInfo = await response.json();
@@ -386,7 +399,7 @@ async function handleFileUpload(file) {
 
     } catch (error) {
         console.error("Erreur lors de l'envoi du fichier:", error);
-        alert("Échec de l'envoi du fichier.");
+        alert(error.message || "Échec de l'envoi du fichier.");
     }
 }
 
@@ -397,11 +410,35 @@ function addFileToChat(sender, fileData, isOutgoing = false, messageId = null) {
 
     let fileContent = '';
     if (fileData.type.startsWith('image/')) {
-        fileContent = `<img src="${fileData.url}" alt="${fileData.name}" class="message-image" onclick="openMediaViewer(this.src)">`;
+        fileContent = `
+            <div class="message-media">
+                <img src="${fileData.url}" alt="${fileData.name}" class="message-image" onclick="openMediaViewer(this.src)">
+                <div class="file-info">
+                    <span class="file-name">${fileData.name}</span>
+                    <span class="file-size">${formatFileSize(fileData.size)}</span>
+                </div>
+            </div>`;
+    } else if (fileData.type.startsWith('video/')) {
+        fileContent = `
+            <div class="message-media">
+                <video controls class="message-video">
+                    <source src="${fileData.url}" type="${fileData.type}">
+                    Votre navigateur ne supporte pas la lecture de vidéos.
+                </video>
+                <div class="file-info">
+                    <span class="file-name">${fileData.name}</span>
+                    <span class="file-size">${formatFileSize(fileData.size)}</span>
+                </div>
+            </div>`;
     } else {
-        fileContent = `<a href="${fileData.url}" download="${fileData.name}" class="message-file">
-            <i class="fas fa-file"></i> ${fileData.name}
-        </a>`;
+        fileContent = `
+            <div class="message-file">
+                <i class="fas fa-file"></i>
+                <div class="file-info">
+                    <span class="file-name">${fileData.name}</span>
+                    <span class="file-size">${formatFileSize(fileData.size)}</span>
+                </div>
+            </div>`;
     }
 
     messageElement.innerHTML = `
@@ -415,6 +452,15 @@ function addFileToChat(sender, fileData, isOutgoing = false, messageId = null) {
     `;
     messagesList.appendChild(messageElement);
     messagesList.scrollTop = messagesList.scrollHeight;
+}
+
+// Fonction pour formater la taille des fichiers
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
 // Fonction pour ouvrir le visualiseur de médias
