@@ -693,9 +693,8 @@ body {
     text-align: center;
 }
 
-.message p i {
-    font-style: italic;
-    opacity: 0.7;
+.message p {
+    margin: 0;
 }
 
 .message.deleted {

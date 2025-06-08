@@ -108,7 +108,7 @@ searchInput.addEventListener('input', (e) => {
 });
 
 // Affichage des messages
-function addMessageToChat(sender, text, isOutgoing = false, replyTo = null, messageId = null, isDeleted = false) {
+function addMessageToChat(sender, text, isOutgoing = false, replyTo = null, messageId = null) {
     const messageElement = document.createElement('div');
     messageElement.className = `message ${isOutgoing ? 'outgoing' : 'incoming'}`;
     messageElement.id = messageId;
@@ -133,27 +133,25 @@ function addMessageToChat(sender, text, isOutgoing = false, replyTo = null, mess
                 <div style="display:flex;align-items:center;gap:8px;">
                     <span class="message-sender" style="font-size:1rem;">${sender}</span>
                 </div>
-                <p style="margin:4px 0 0 0;word-break:break-word;">${isDeleted ? '<i>Ce message a été supprimé</i>' : text}</p>
+                <p style="margin:4px 0 0 0;word-break:break-word;">${text}</p>
             </div>
-            ${!isDeleted ? menuButton : ''}
+            ${menuButton}
         </div>
         <span class="message-time" style="display:block;text-align:right;margin-top:2px;opacity:0.7;">${new Date().toLocaleTimeString()}</span>
     `;
 
-    // Ajouter le gestionnaire d'événements pour le menu contextuel seulement si le message n'est pas supprimé
-    if (!isDeleted) {
-        const menuBtn = messageElement.querySelector('.message-menu-button');
-        if (menuBtn) {
-            menuBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const existingMenu = document.getElementById('messageContextMenu');
-                if (existingMenu && existingMenu.dataset.messageId === messageId) {
-                    existingMenu.remove(); 
-                } else {
-                    showContextMenu(e, messageId, sender, text, isOutgoing);
-                }
-            });
-        }
+    // Ajouter le gestionnaire d'événements pour le menu contextuel
+    const menuBtn = messageElement.querySelector('.message-menu-button');
+    if (menuBtn) {
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const existingMenu = document.getElementById('messageContextMenu');
+            if (existingMenu && existingMenu.dataset.messageId === messageId) {
+                existingMenu.remove(); 
+            } else {
+                showContextMenu(e, messageId, sender, text, isOutgoing);
+            }
+        });
     }
 
     messagesList.appendChild(messageElement);
@@ -171,7 +169,7 @@ function showContextMenu(e, messageId, sender, text, isOutgoing) {
     contextMenu.className = 'message-context-menu';
     contextMenu.style.top = `${e.clientY}px`;
     contextMenu.style.left = `${e.clientX}px`;
-    contextMenu.dataset.messageId = messageId; // Stocker l'ID du message sur le menu
+    contextMenu.dataset.messageId = messageId;
 
     // Option Répondre
     const replyOption = document.createElement('button');
@@ -183,26 +181,6 @@ function showContextMenu(e, messageId, sender, text, isOutgoing) {
     });
     contextMenu.appendChild(replyOption);
 
-    // Option Supprimer pour moi (toujours disponible)
-    const deleteForMeOption = document.createElement('button');
-    deleteForMeOption.innerHTML = '<i class="fas fa-trash"></i> Supprimer pour moi';
-    deleteForMeOption.addEventListener('click', () => {
-        deleteMessage(messageId, false); // false signifie supprimer seulement pour l'utilisateur actuel
-        contextMenu.remove();
-    });
-    contextMenu.appendChild(deleteForMeOption);
-
-    // Option Supprimer pour tout le monde (seulement pour les messages sortants)
-    if (isOutgoing) {
-        const deleteForEveryoneOption = document.createElement('button');
-        deleteForEveryoneOption.innerHTML = '<i class="fas fa-trash-alt"></i> Supprimer pour tout le monde';
-        deleteForEveryoneOption.addEventListener('click', () => {
-            deleteMessage(messageId, true); // true signifie supprimer pour tout le monde
-            contextMenu.remove();
-        });
-        contextMenu.appendChild(deleteForEveryoneOption);
-    }
-
     document.body.appendChild(contextMenu);
 
     // Fermer le menu si on clique ailleurs
@@ -212,30 +190,6 @@ function showContextMenu(e, messageId, sender, text, isOutgoing) {
             document.removeEventListener('click', closeMenuGlobal);
         }
     });
-}
-
-// Fonction pour supprimer un message
-function deleteMessage(messageId, forEveryone) {
-    const messageData = {
-        messageId: messageId,
-        from: currentUser,
-        to: selectedContact,
-        forEveryone: forEveryone
-    };
-
-    socket.emit('delete_message', messageData);
-
-    // Si c'est une suppression locale, supprimer immédiatement
-    if (!forEveryone) {
-        const msgElem = document.getElementById(messageId);
-        if (msgElem) msgElem.remove();
-
-        // Retirer du stockage côté client
-        if (chatMessages.has(selectedContact)) {
-            let messages = chatMessages.get(selectedContact);
-            chatMessages.set(selectedContact, messages.filter(msg => msg.id !== messageId));
-        }
-    }
 }
 
 // Fonction pour afficher la prévisualisation de la réponse
@@ -543,29 +497,5 @@ socket.on('typing', (data) => {
 socket.on('stop_typing', (data) => {
     if (data.from === selectedContact) {
         hideTypingIndicator();
-    }
-});
-
-// Gérer la réception de la suppression pour tout le monde (pour le destinataire)
-socket.on('delete_message', (data) => {
-    if (data.forEveryone) {
-        const msgElem = document.getElementById(data.messageId);
-        if (msgElem) {
-            // Au lieu de supprimer le message, on le marque comme supprimé
-            const sender = msgElem.querySelector('.message-sender').textContent;
-            const time = msgElem.querySelector('.message-time').textContent;
-            msgElem.remove();
-            addMessageToChat(sender, '', sender === currentUser, null, data.messageId, true);
-
-            // Retirer du stockage côté client
-            if (chatMessages.has(data.from)) {
-                let messages = chatMessages.get(data.from);
-                chatMessages.set(data.from, messages.filter(msg => msg.id !== data.messageId));
-            }
-            if (chatMessages.has(data.to)) {
-                let messages = chatMessages.get(data.to);
-                chatMessages.set(data.to, messages.filter(msg => msg.id !== data.messageId));
-            }
-        }
     }
 }); 
