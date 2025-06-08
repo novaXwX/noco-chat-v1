@@ -130,7 +130,6 @@ function addMessageToChat(sender, text, isOutgoing = false, replyTo = null, mess
             <div style="flex:1;min-width:0;">
                 <div style="display:flex;align-items:center;gap:8px;">
                     <span class="message-sender" style="font-size:1rem;">${sender}</span>
-                    <span class="message-menu-btn" style="cursor:pointer;font-size:1rem;line-height:1;">&#8942;</span>
                 </div>
                 <p style="margin:4px 0 0 0;word-break:break-word;">${text}</p>
             </div>
@@ -139,98 +138,6 @@ function addMessageToChat(sender, text, isOutgoing = false, replyTo = null, mess
     `;
     messagesList.appendChild(messageElement);
     messagesList.scrollTop = messagesList.scrollHeight;
-
-    // Gestion du menu de suppression
-    const btn = messageElement.querySelector('.message-menu-btn');
-    btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        showDeleteMenu(messageElement, isOutgoing, messageId, sender, text);
-    });
-}
-
-// Menu suppression façon WhatsApp
-function showDeleteMenu(messageElement, isOutgoing, messageId, messageSender, messageText) {
-    // Supprime un éventuel menu déjà ouvert
-    const oldMenu = document.getElementById('delete-menu');
-    if (oldMenu) oldMenu.remove();
-    // Création du menu
-    const menu = document.createElement('div');
-    menu.id = 'delete-menu';
-    menu.style.position = 'absolute';
-    menu.style.background = 'var(--bg-sidebar)';
-    menu.style.color = 'var(--text-main)';
-    menu.style.border = '1px solid var(--border)';
-    menu.style.borderRadius = '8px';
-    menu.style.boxShadow = '0 2px 8px rgba(44,62,80,0.10)';
-    menu.style.padding = '8px 0';
-    menu.style.zIndex = 1000;
-    menu.style.right = '30px';
-    menu.style.top = '30px';
-    menu.style.minWidth = '160px';
-    menu.style.textAlign = 'left';
-
-    // Option Répondre
-    const replyOption = document.createElement('div');
-    replyOption.textContent = 'Répondre';
-    replyOption.style.padding = '8px 16px';
-    replyOption.style.cursor = 'pointer';
-    replyOption.onmouseover = () => replyOption.style.background = 'var(--contact-hover)';
-    replyOption.onmouseout = () => replyOption.style.background = 'none';
-    replyOption.onclick = () => {
-        currentReplyMessage = {
-            id: messageId,
-            sender: messageSender,
-            text: messageText
-        };
-        displayReplyPreview(messageSender, messageText);
-        menu.remove();
-    };
-    menu.appendChild(replyOption);
-
-    // Option supprimer pour moi
-    const delForMe = document.createElement('div');
-    delForMe.textContent = 'Supprimer pour moi';
-    delForMe.style.padding = '8px 16px';
-    delForMe.style.cursor = 'pointer';
-    delForMe.onmouseover = () => delForMe.style.background = 'var(--contact-hover)';
-    delForMe.onmouseout = () => delForMe.style.background = 'none';
-    delForMe.onclick = () => {
-        messageElement.remove();
-        menu.remove();
-    };
-    menu.appendChild(delForMe);
-    // Option supprimer pour tout le monde (si c'est mon message)
-    if (isOutgoing) {
-        const delForAll = document.createElement('div');
-        delForAll.textContent = 'Supprimer pour tout le monde';
-        delForAll.style.padding = '8px 16px';
-        delForAll.style.cursor = 'pointer';
-        delForAll.onmouseover = () => delForAll.style.background = 'var(--contact-hover)';
-        delForAll.onmouseout = () => delForAll.style.background = 'none';
-        delForAll.onclick = () => {
-            // Suppression pour tout le monde
-            socket.emit('delete_message', {
-                messageId: messageId,
-                to: selectedContact,
-                from: currentUser
-            });
-            messageElement.remove();
-            menu.remove();
-        };
-        menu.appendChild(delForAll);
-    }
-    // Fermer le menu si on clique ailleurs
-    document.body.appendChild(menu);
-    const rect = messageElement.getBoundingClientRect();
-    menu.style.left = (rect.right - 180) + 'px';
-    menu.style.top = (rect.top + 20 + window.scrollY) + 'px';
-    function closeMenu(e) {
-        if (!menu.contains(e.target)) {
-            menu.remove();
-            document.removeEventListener('mousedown', closeMenu);
-        }
-    }
-    setTimeout(() => document.addEventListener('mousedown', closeMenu), 10);
 }
 
 // Fonction pour afficher la prévisualisation de la réponse
