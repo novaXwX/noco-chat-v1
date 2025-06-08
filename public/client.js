@@ -124,6 +124,18 @@ function addMessageToChat(sender, text, isOutgoing = false, replyTo = null, mess
         `;
     }
 
+    // Ajouter les boutons de suppression pour les messages sortants
+    const deleteButtons = isOutgoing ? `
+        <div class="message-actions">
+            <button class="delete-for-me" title="Supprimer pour moi">
+                <i class="fas fa-trash"></i>
+            </button>
+            <button class="delete-for-everyone" title="Supprimer pour tout le monde">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </div>
+    ` : '';
+
     messageElement.innerHTML = `
         ${replyHtml}
         <div class="message-content-row" style="display:flex;align-items:flex-start;justify-content:space-between;">
@@ -133,11 +145,51 @@ function addMessageToChat(sender, text, isOutgoing = false, replyTo = null, mess
                 </div>
                 <p style="margin:4px 0 0 0;word-break:break-word;">${text}</p>
             </div>
+            ${deleteButtons}
         </div>
         <span class="message-time" style="display:block;text-align:right;margin-top:2px;opacity:0.7;">${new Date().toLocaleTimeString()}</span>
     `;
+
+    // Ajouter les gestionnaires d'événements pour les boutons de suppression
+    if (isOutgoing) {
+        const deleteForMeBtn = messageElement.querySelector('.delete-for-me');
+        const deleteForEveryoneBtn = messageElement.querySelector('.delete-for-everyone');
+
+        deleteForMeBtn.addEventListener('click', () => {
+            deleteMessage(messageId, false);
+        });
+
+        deleteForEveryoneBtn.addEventListener('click', () => {
+            deleteMessage(messageId, true);
+        });
+    }
+
     messagesList.appendChild(messageElement);
     messagesList.scrollTop = messagesList.scrollHeight;
+}
+
+// Fonction pour supprimer un message
+function deleteMessage(messageId, forEveryone) {
+    const messageData = {
+        messageId: messageId,
+        from: currentUser,
+        to: selectedContact,
+        forEveryone: forEveryone
+    };
+
+    socket.emit('delete_message', messageData);
+
+    // Si c'est une suppression locale, supprimer immédiatement
+    if (!forEveryone) {
+        const msgElem = document.getElementById(messageId);
+        if (msgElem) msgElem.remove();
+
+        // Retirer du stockage côté client
+        if (chatMessages.has(selectedContact)) {
+            let messages = chatMessages.get(selectedContact);
+            chatMessages.set(selectedContact, messages.filter(msg => msg.id !== messageId));
+        }
+    }
 }
 
 // Fonction pour afficher la prévisualisation de la réponse
@@ -236,22 +288,6 @@ socket.on('private_message', (data) => {
         // Si c'est un message entrant pour un autre chat, marquer comme non lu
         unreadMessages.add(data.from);
         renderContacts(searchInput.value);
-    }
-});
-
-// Réception de la suppression pour tout le monde
-socket.on('delete_message', (data) => {
-    const msgElem = document.getElementById(data.messageId);
-    if (msgElem) msgElem.remove();
-
-    // Retirer également du stockage côté client
-    if (chatMessages.has(data.from)) {
-        let messages = chatMessages.get(data.from);
-        chatMessages.set(data.from, messages.filter(msg => msg.id !== data.messageId));
-    }
-    if (chatMessages.has(data.to)) {
-        let messages = chatMessages.get(data.to);
-        chatMessages.set(data.to, messages.filter(msg => msg.id !== data.messageId));
     }
 });
 

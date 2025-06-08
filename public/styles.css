@@ -609,3 +609,37 @@ body {
     margin-bottom: 16px;
     color: var(--accent-color);
 }
+
+/* Styles pour les actions de message */
+.message-actions {
+    display: flex;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.message:hover .message-actions {
+    opacity: 1;
+}
+
+.delete-for-me,
+.delete-for-everyone {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.delete-for-me:hover,
+.delete-for-everyone:hover {
+    background-color: var(--hover-color);
+    color: var(--accent-color);
+}
+
+.delete-for-me i,
+.delete-for-everyone i {
+    font-size: 0.9rem;
+}
