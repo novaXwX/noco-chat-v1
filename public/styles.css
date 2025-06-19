@@ -1,4 +1,4 @@
-²* Variables globales pour les thèmes */
+* Variables globales pour les thèmes */
 * {
     box-sizing: border-box;
 }
@@ -144,6 +144,7 @@ body {
     flex-direction: column;
     border-right: 1.5px solid var(--border);
     min-width: 220px;
+    padding-right: 8px;
 }
 .contacts-header {
     background: var(--bg-header);
@@ -164,6 +165,7 @@ body {
     background: var(--bg-main);
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(44,62,80,0.04);
+    margin-left: 2px;
 }
 .search-input {
     width: 100%;
