@@ -164,8 +164,8 @@ body {
     margin: 0 0 12px 0;
     padding: 0;
     border-bottom: 1.5px solid var(--border);
-    background: var(--bg-main);
-    border-radius: 8px;
+    background: var(--bg-sidebar) !important;
+    border-radius: 0;
     box-shadow: none;
     display: flex;
     align-items: center;
@@ -175,7 +175,7 @@ body {
     box-sizing: border-box;
     padding: 10px 14px;
     border: 1.5px solid var(--border);
-    border-radius: 7px;
+    border-radius: 0;
     font-size: 0.95rem;
     background: var(--bg-input);
     color: var(--text-main);
