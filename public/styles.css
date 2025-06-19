@@ -354,6 +354,24 @@ body {
     animation: fadeIn 0.3s;
 }
 
+#typing-indicator-chatbar {
+    position: relative;
+    bottom: 0;
+    left: 0;
+    margin: 0 0 2px 12px;
+    color: var(--primary-color);
+    font-size: 1rem;
+    min-height: 24px;
+    max-width: 60%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    z-index: 2;
+    animation: fadeIn 0.3s;
+    display: flex;
+    align-items: center;
+}
+
 /* Dropzone pour upload de fichiers */
 .dropzone-container {
     height: 140px;

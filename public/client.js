@@ -707,21 +707,15 @@ fileInput.addEventListener('change', (e) => {
 // Ajout de l'affichage "en train d'écrire..." sous le nom du contact et dans la zone de chat
 function showTypingIndicator(sender) {
     // Supprimer l'ancien indicateur s'il existe
-    let typingInputElem = document.getElementById('typing-indicator-input');
-    if (!typingInputElem) {
-        typingInputElem = document.createElement('div');
-        typingInputElem.id = 'typing-indicator-input';
-        typingInputElem.style.fontSize = '1rem';
-        typingInputElem.style.color = 'var(--primary-color)';
-        typingInputElem.style.margin = '0 10px 0 0';
-        typingInputElem.style.display = 'flex';
-        typingInputElem.style.alignItems = 'center';
-        typingInputElem.style.height = '100%';
-        // Insérer juste avant le champ de saisie dans le formulaire
-        const messageForm = document.getElementById('messageForm');
-        messageForm.insertBefore(typingInputElem, messageForm.querySelector('input'));
+    let typingChatBarElem = document.getElementById('typing-indicator-chatbar');
+    if (!typingChatBarElem) {
+        typingChatBarElem = document.createElement('div');
+        typingChatBarElem.id = 'typing-indicator-chatbar';
+        // Style minimal, le CSS fera le reste
+        const chatMain = document.querySelector('.chat-main');
+        chatMain.insertBefore(typingChatBarElem, document.getElementById('messageForm'));
     }
-    typingInputElem.textContent = `${sender} écrit...`;
+    typingChatBarElem.textContent = `${sender} écrit...`;
 
     // Masquer après 2 secondes sans nouveau signal
     clearTimeout(typingTimeout);
@@ -729,9 +723,8 @@ function showTypingIndicator(sender) {
 }
 
 function hideTypingIndicator() {
-    const typingInputElem = document.getElementById('typing-indicator-input');
-    if (typingInputElem) typingInputElem.remove();
-    // On ne touche plus à l'ancien header/chat
+    const typingChatBarElem = document.getElementById('typing-indicator-chatbar');
+    if (typingChatBarElem) typingChatBarElem.remove();
 }
 
 // Émission du signal "en train d'écrire" ou "arrêt d'écriture"
