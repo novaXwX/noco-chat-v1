@@ -227,6 +227,10 @@ function applyTranslations() {
         btn.addEventListener('click', () => {
             setTheme(btn.getAttribute('data-theme'));
             updateThemeSelection();
+            // Fermer la liste après sélection
+            themeList.classList.remove('open');
+            themeAccordion.classList.remove('open');
+            themeAccordion.querySelector('.arrow').textContent = '▶';
         });
     });
     updateThemeSelection();
@@ -339,9 +343,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const themeAccordion = document.getElementById('settingsThemeAccordion');
     const themeList = document.getElementById('settingsThemeList');
     if (themeAccordion && themeList) {
-        themeList.classList.remove('open');
-        themeAccordion.addEventListener('click', (e) => {
-            e.stopPropagation();
+        themeAccordion.addEventListener('click', () => {
             themeAccordion.classList.toggle('open');
             themeList.classList.toggle('open');
             themeAccordion.querySelector('.arrow').textContent = themeList.classList.contains('open') ? '▼' : '▶';
@@ -377,6 +379,10 @@ window.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => {
             setLang(btn.getAttribute('data-lang'));
             updateLangSelection();
+            // Fermer la liste après sélection
+            langList.classList.remove('open');
+            langAccordion.classList.remove('open');
+            langAccordion.querySelector('.arrow').textContent = '▶';
         });
     });
     updateLangSelection();
@@ -1259,6 +1265,10 @@ window.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => {
             setTheme(btn.getAttribute('data-theme'));
             updateThemeSelection();
+            // Fermer la liste après sélection
+            themeList.classList.remove('open');
+            themeAccordion.classList.remove('open');
+            themeAccordion.querySelector('.arrow').textContent = '▶';
         });
     });
     updateThemeSelection();

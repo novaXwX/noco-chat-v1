@@ -1022,6 +1022,18 @@ body {
     background: var(--primary-color);
     color: #fff;
 }
+.settings-language-list button.selected {
+    background: var(--primary-color);
+    color: #fff;
+    border-color: var(--primary-color);
+    position: relative;
+}
+.settings-language-list button.selected::after {
+    content: '✔';
+    position: absolute;
+    right: 18px;
+    font-size: 1.1em;
+}
 .settings-fab {
     position: fixed;
     right: 32px;
