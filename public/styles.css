@@ -163,28 +163,41 @@ body {
     box-sizing: border-box;
     margin: 0 0 12px 0;
     padding: 0;
-    border-bottom: 1.5px solid var(--border);
-    background: var(--bg-sidebar) !important;
-    border-radius: 0;
+    border-bottom: none;
+    background: transparent;
+    border-radius: 12px;
     box-shadow: none;
     display: flex;
     align-items: center;
+    position: relative;
+}
+.search-container .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    pointer-events: none;
 }
 .search-input {
     width: 100%;
     box-sizing: border-box;
-    padding: 10px 14px;
+    padding: 10px 14px 10px 38px;
     border: 1.5px solid var(--border);
-    border-radius: 0;
-    font-size: 0.95rem;
-    background: var(--bg-input);
+    border-radius: 12px;
+    font-size: 0.98rem;
+    background: rgba(255,255,255,0.06);
     color: var(--text-main);
-    transition: border 0.2s;
+    transition: border 0.2s, box-shadow 0.2s;
     margin: 0;
+    box-shadow: 0 2px 8px rgba(44,62,80,0.10);
 }
 .search-input:focus {
     border: 1.5px solid var(--primary-color);
     outline: none;
+    box-shadow: 0 4px 16px rgba(74,144,226,0.12);
+    background: rgba(255,255,255,0.12);
 }
 .contacts-list {
     flex: 1;
