@@ -996,7 +996,7 @@ body {
     z-index: 10;
 }
 .settings-section {
-    margin-top: 24px;
+    margin-top: 18px;
 }
 .settings-language-list {
     margin-top: 8px;
@@ -1044,19 +1044,23 @@ body {
     background: var(--secondary-color);
 }
 
-.settings-theme-accordion {
+.settings-language-accordion, .settings-theme-accordion {
     display: flex;
     align-items: center;
     cursor: pointer;
-    font-size: 1.1rem;
-    font-weight: 500;
-    padding: 8px 0;
+    font-size: 1.15rem;
+    font-weight: 600;
+    padding: 12px 0 8px 0;
     user-select: none;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text-main);
+    letter-spacing: 0.2px;
 }
-.settings-theme-accordion .arrow {
+.settings-language-accordion .arrow, .settings-theme-accordion .arrow {
     margin-left: 8px;
     font-size: 1.2em;
     transition: transform 0.2s;
+    font-weight: 700;
 }
 .settings-theme-accordion.open .arrow {
     transform: rotate(90deg);
