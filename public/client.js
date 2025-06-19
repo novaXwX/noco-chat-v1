@@ -80,7 +80,10 @@ const translations = {
         enterPseudoEmpty: 'Veuillez entrer un pseudo !',
         settings: 'Paramètres',
         language: 'Langue',
-        searchContact: 'Rechercher un contact'
+        searchContact: 'Rechercher un contact',
+        theme: 'Thème',
+        themeDark: 'Sombre',
+        themeLight: 'Clair'
     },
     en: {
         online: 'Online',
@@ -99,7 +102,10 @@ const translations = {
         enterPseudoEmpty: 'Please enter a username!',
         settings: 'Settings',
         language: 'Language',
-        searchContact: 'Search contact'
+        searchContact: 'Search contact',
+        theme: 'Theme',
+        themeDark: 'Dark',
+        themeLight: 'Light'
     },
     es: {
         online: 'En línea',
@@ -118,7 +124,10 @@ const translations = {
         enterPseudoEmpty: 'Por favor, ingrese un nombre de usuario!',
         settings: 'Configuración',
         language: 'Idioma',
-        searchContact: 'Buscar contacto'
+        searchContact: 'Buscar contacto',
+        theme: 'Tema',
+        themeDark: 'Oscuro',
+        themeLight: 'Claro'
     },
     ru: {
         online: 'Онлайн',
@@ -137,7 +146,10 @@ const translations = {
         enterPseudoEmpty: 'Пожалуйста, введите псевдоним!',
         settings: 'Настройки',
         language: 'Язык',
-        searchContact: 'Поиск контакта'
+        searchContact: 'Поиск контакта',
+        theme: 'Тема',
+        themeDark: 'Темная',
+        themeLight: 'Светлая'
     },
     zh: {
         online: '在线',
@@ -156,7 +168,10 @@ const translations = {
         enterPseudoEmpty: '请输入用户名！',
         settings: '设置',
         language: '语言',
-        searchContact: '搜索联系人'
+        searchContact: '搜索联系人',
+        theme: '主题',
+        themeDark: '暗色',
+        themeLight: '亮色'
     }
 };
 
@@ -198,6 +213,40 @@ function applyTranslations() {
     // Indicateur typing (si visible)
     const typingElem = document.getElementById('typing-indicator-chatbar');
     if (typingElem && selectedContact) typingElem.textContent = t.userIsTyping(selectedContact);
+    // Accordion thème
+    const themeAccordion = document.getElementById('settingsThemeAccordion');
+    const themeList = document.getElementById('settingsThemeList');
+    if (themeAccordion && themeList) {
+        themeAccordion.addEventListener('click', () => {
+            themeAccordion.classList.toggle('open');
+            themeList.classList.toggle('open');
+            themeAccordion.querySelector('.arrow').textContent = themeList.classList.contains('open') ? '▼' : '▶';
+        });
+    }
+    // Sélection du thème
+    function updateThemeSelection() {
+        document.querySelectorAll('#settingsThemeList button').forEach(btn => {
+            if (btn.getAttribute('data-theme') === currentTheme) {
+                btn.classList.add('selected');
+            } else {
+                btn.classList.remove('selected');
+            }
+        });
+    }
+    document.querySelectorAll('#settingsThemeList button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            setTheme(btn.getAttribute('data-theme'));
+            updateThemeSelection();
+        });
+    });
+    updateThemeSelection();
+    const themeTitle = document.getElementById('settingsThemeTitle');
+    if (themeTitle) themeTitle.textContent = t.theme;
+    const themeBtns = document.querySelectorAll('#settingsThemeList button');
+    if (themeBtns.length === 2) {
+        themeBtns[0].textContent = t.themeDark;
+        themeBtns[1].textContent = t.themeLight;
+    }
 }
 
 // Ajout d'une interface de paramètres dédiée
@@ -1141,4 +1190,21 @@ function getFileContent(fileData) {
                 </div>
             </div>`;
     }
-} 
+}
+
+// === Gestion du thème ===
+let currentTheme = localStorage.getItem('theme') || 'dark';
+function setTheme(theme) {
+    currentTheme = theme;
+    localStorage.setItem('theme', theme);
+    document.body.classList.remove('theme-dark', 'theme-light');
+    document.body.classList.add(theme === 'dark' ? 'theme-dark' : 'theme-light');
+    if (typeof updateThemeSelection === 'function') updateThemeSelection();
+}
+// Appliquer le thème au chargement
+setTheme(currentTheme);
+
+// Ajout des traductions dans l'objet translations
+// ... existing code ...
+// ... existing code ...
+// ... existing code ... 

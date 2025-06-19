@@ -1,4 +1,4 @@
-/* Variables globales pour les thèmes */
+²* Variables globales pour les thèmes */
 * {
     box-sizing: border-box;
 }
@@ -1047,6 +1047,44 @@ body {
     position: relative;
 }
 .settings-language-list button.selected::after {
+    content: '✔';
+    position: absolute;
+    right: 14px;
+    font-size: 1.1em;
+}
+
+.settings-theme-accordion {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 500;
+    padding: 8px 0;
+    user-select: none;
+}
+.settings-theme-accordion .arrow {
+    margin-left: 8px;
+    font-size: 1.2em;
+    transition: transform 0.2s;
+}
+.settings-theme-accordion.open .arrow {
+    transform: rotate(90deg);
+}
+.settings-theme-list {
+    margin-top: 8px;
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+}
+.settings-theme-list.open {
+    display: flex;
+}
+.settings-theme-list button.selected {
+    background: var(--primary-color);
+    color: #fff;
+    position: relative;
+}
+.settings-theme-list button.selected::after {
     content: '✔';
     position: absolute;
     right: 14px;
