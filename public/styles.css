@@ -144,6 +144,7 @@ body {
     flex-direction: column;
     border-right: 1.5px solid var(--border);
     min-width: 220px;
+    padding: 0;
 }
 .contacts-header {
     background: var(--bg-header);
@@ -158,14 +159,14 @@ body {
     justify-content: space-between;
 }
 .search-container {
-    padding: 10px 20px 10px 20px;
+    width: calc(100% - 16px);
+    box-sizing: border-box;
+    margin: 0 auto 12px auto;
+    padding: 10px 20px;
     border-bottom: 1.5px solid var(--border);
-    margin-bottom: 12px;
     background: var(--bg-main);
-    border-radius: 8px 0 0 8px;
+    border-radius: 8px;
     box-shadow: 0 2px 8px rgba(44,62,80,0.04);
-    margin-left: 0;
-    margin-right: 0;
 }
 .search-input {
     width: 100%;
@@ -1017,7 +1018,7 @@ body {
     background: var(--secondary-color);
 }
 
-.settings-language-accordion {
+.settings-theme-accordion {
     display: flex;
     align-items: center;
     cursor: pointer;
@@ -1026,29 +1027,29 @@ body {
     padding: 8px 0;
     user-select: none;
 }
-.settings-language-accordion .arrow {
+.settings-theme-accordion .arrow {
     margin-left: 8px;
     font-size: 1.2em;
     transition: transform 0.2s;
 }
-.settings-language-accordion.open .arrow {
+.settings-theme-accordion.open .arrow {
     transform: rotate(90deg);
 }
-.settings-language-list {
+.settings-theme-list {
     margin-top: 8px;
     display: none;
     flex-direction: column;
     gap: 4px;
 }
-.settings-language-list.open {
+.settings-theme-list.open {
     display: flex;
 }
-.settings-language-list button.selected {
+.settings-theme-list button.selected {
     background: var(--primary-color);
     color: #fff;
     position: relative;
 }
-.settings-language-list button.selected::after {
+.settings-theme-list button.selected::after {
     content: '✔';
     position: absolute;
     right: 14px;

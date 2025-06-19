@@ -1206,7 +1206,34 @@ function setTheme(theme) {
 // Appliquer le thème au chargement
 setTheme(currentTheme);
 
-// Ajout des traductions dans l'objet translations
-// ... existing code ...
-// ... existing code ...
-// ... existing code ... 
+window.addEventListener('DOMContentLoaded', () => {
+    applyTranslations();
+    // ... listeners roue paramètres/langue ...
+    // Accordion thème
+    const themeAccordion = document.getElementById('settingsThemeAccordion');
+    const themeList = document.getElementById('settingsThemeList');
+    if (themeAccordion && themeList) {
+        themeAccordion.addEventListener('click', () => {
+            themeAccordion.classList.toggle('open');
+            themeList.classList.toggle('open');
+            themeAccordion.querySelector('.arrow').textContent = themeList.classList.contains('open') ? '▼' : '▶';
+        });
+    }
+    // Sélection du thème
+    function updateThemeSelection() {
+        document.querySelectorAll('#settingsThemeList button').forEach(btn => {
+            if (btn.getAttribute('data-theme') === currentTheme) {
+                btn.classList.add('selected');
+            } else {
+                btn.classList.remove('selected');
+            }
+        });
+    }
+    document.querySelectorAll('#settingsThemeList button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            setTheme(btn.getAttribute('data-theme'));
+            updateThemeSelection();
+        });
+    });
+    updateThemeSelection();
+}); 
