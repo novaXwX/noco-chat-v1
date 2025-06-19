@@ -324,6 +324,13 @@ window.addEventListener('DOMContentLoaded', () => {
     if (closeSettings) {
         closeSettings.addEventListener('click', () => {
             document.getElementById('settingsPage').style.display = 'none';
+            // Ferme les listes ouvertes
+            document.getElementById('settingsLanguageList').classList.remove('open');
+            document.getElementById('settingsLanguageAccordion').classList.remove('open');
+            document.getElementById('settingsLanguageAccordion').querySelector('.arrow').textContent = '▶';
+            document.getElementById('settingsThemeList').classList.remove('open');
+            document.getElementById('settingsThemeAccordion').classList.remove('open');
+            document.getElementById('settingsThemeAccordion').querySelector('.arrow').textContent = '▶';
         });
     }
     // Accordion langue
@@ -331,12 +338,41 @@ window.addEventListener('DOMContentLoaded', () => {
     const langList = document.getElementById('settingsLanguageList');
     if (langAccordion && langList) {
         langList.classList.remove('open'); // Toujours caché au départ
-        langAccordion.addEventListener('click', () => {
+        langAccordion.addEventListener('click', (e) => {
+            e.stopPropagation();
             langAccordion.classList.toggle('open');
             langList.classList.toggle('open');
             langAccordion.querySelector('.arrow').textContent = langList.classList.contains('open') ? '▼' : '▶';
         });
     }
+    // Accordion thème
+    const themeAccordion = document.getElementById('settingsThemeAccordion');
+    const themeList = document.getElementById('settingsThemeList');
+    if (themeAccordion && themeList) {
+        themeList.classList.remove('open');
+        themeAccordion.addEventListener('click', (e) => {
+            e.stopPropagation();
+            themeAccordion.classList.toggle('open');
+            themeList.classList.toggle('open');
+            themeAccordion.querySelector('.arrow').textContent = themeList.classList.contains('open') ? '▼' : '▶';
+        });
+    }
+    // Fermer les listes si clic ailleurs
+    document.addEventListener('click', function closeAccordions(e) {
+        const settingsPage = document.getElementById('settingsPage');
+        if (settingsPage && settingsPage.style.display === 'flex') {
+            if (!langAccordion.contains(e.target) && !langList.contains(e.target)) {
+                langAccordion.classList.remove('open');
+                langList.classList.remove('open');
+                langAccordion.querySelector('.arrow').textContent = '▶';
+            }
+            if (!themeAccordion.contains(e.target) && !themeList.contains(e.target)) {
+                themeAccordion.classList.remove('open');
+                themeList.classList.remove('open');
+                themeAccordion.querySelector('.arrow').textContent = '▶';
+            }
+        }
+    });
     // Sélection de la langue
     function updateLangSelection() {
         document.querySelectorAll('#settingsLanguageList button').forEach(btn => {
@@ -1192,7 +1228,7 @@ function getFileContent(fileData) {
                 </div>
             </div>`;
     }
-}
+} 
 
 // === Gestion du thème ===
 let currentTheme = localStorage.getItem('theme') || 'dark';
