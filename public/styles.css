@@ -144,7 +144,6 @@ body {
     flex-direction: column;
     border-right: 1.5px solid var(--border);
     min-width: 220px;
-    padding-right: 8px;
 }
 .contacts-header {
     background: var(--bg-header);
@@ -159,13 +158,14 @@ body {
     justify-content: space-between;
 }
 .search-container {
-    padding: 10px 20px;
+    padding: 10px 20px 10px 20px;
     border-bottom: 1.5px solid var(--border);
     margin-bottom: 12px;
     background: var(--bg-main);
-    border-radius: 8px;
+    border-radius: 8px 0 0 8px;
     box-shadow: 0 2px 8px rgba(44,62,80,0.04);
-    margin-left: 2px;
+    margin-left: 0;
+    margin-right: 0;
 }
 .search-input {
     width: 100%;
