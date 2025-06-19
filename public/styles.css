@@ -159,10 +159,10 @@ body {
     justify-content: space-between;
 }
 .search-container {
-    width: calc(100% - 16px);
+    width: 100%;
     box-sizing: border-box;
-    margin: 0 auto 12px auto;
-    padding: 10px 20px;
+    margin: 0 0 12px 0;
+    padding: 10px 16px;
     border-bottom: 1.5px solid var(--border);
     background: var(--bg-main);
     border-radius: 8px;
@@ -170,6 +170,7 @@ body {
 }
 .search-input {
     width: 100%;
+    box-sizing: border-box;
     padding: 10px 14px;
     border: 1.5px solid var(--border);
     border-radius: 7px;
@@ -980,6 +981,15 @@ body {
 }
 .settings-section {
     margin-top: 24px;
+}
+.settings-language-list {
+    margin-top: 8px;
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+}
+.settings-language-list.open {
+    display: flex;
 }
 .settings-language-list button {
     margin: 6px 8px 0 0;

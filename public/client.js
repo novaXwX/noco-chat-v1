@@ -330,10 +330,10 @@ window.addEventListener('DOMContentLoaded', () => {
     const langAccordion = document.getElementById('settingsLanguageAccordion');
     const langList = document.getElementById('settingsLanguageList');
     if (langAccordion && langList) {
+        langList.classList.remove('open'); // Toujours caché au départ
         langAccordion.addEventListener('click', () => {
             langAccordion.classList.toggle('open');
             langList.classList.toggle('open');
-            // Flèche
             langAccordion.querySelector('.arrow').textContent = langList.classList.contains('open') ? '▼' : '▶';
         });
     }
