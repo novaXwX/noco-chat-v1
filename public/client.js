@@ -300,6 +300,8 @@ function showSettingsMenu(targetElem) {
 
 // Ajout listeners sur les roues
 window.addEventListener('DOMContentLoaded', () => {
+    document.body.classList.remove('theme-light');
+    document.body.classList.add('theme-dark');
     applyTranslations();
     // Auth: roue en bas à droite
     const loginSettings = document.getElementById('login-settings');
