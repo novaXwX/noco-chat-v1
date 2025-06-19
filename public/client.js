@@ -32,7 +32,7 @@ socket.on('connect', () => {
 
 socket.on('connect_error', (error) => {
     console.error('Erreur de connexion Socket.IO:', error);
-    alert('Erreur de connexion au serveur. Veuillez réessayer.');
+    alert(translations[currentLang].connectionError);
     pseudoForm.style.display = 'flex';
     chatContainer.style.display = 'none';
 });
@@ -41,10 +41,10 @@ socket.on('connect_error', (error) => {
 pseudoForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const pseudo = document.getElementById('pseudo').value.trim();
-    if (!pseudo) return alert('Veuillez entrer un pseudo !');
+    if (!pseudo) return alert(translations[currentLang].enterPseudoEmpty);
     
     if (!socket.connected) {
-        alert('Pas de connexion au serveur. Veuillez réessayer.');
+        alert(translations[currentLang].connectionError);
         return;
     }
     
@@ -59,6 +59,179 @@ socket.on('username_taken', (message) => {
     alert(message);
     pseudoForm.style.display = 'flex'; // Réafficher le formulaire de pseudo
     chatContainer.style.display = 'none'; // Masquer le conteneur de chat
+});
+
+// === Gestion multilingue ===
+const translations = {
+    fr: {
+        online: 'En ligne',
+        selectContact: 'Sélectionnez un contact',
+        enterPseudo: 'Entrez votre pseudo',
+        enter: 'Entrer',
+        writeMessage: 'Écrivez votre message...',
+        userIsTyping: (user) => `${user} écrit...`,
+        fileTooLarge: 'Le fichier est trop volumineux. Taille maximale: 50MB',
+        unsupportedFile: 'Type de fichier non supporté. Seules les images et vidéos sont acceptées.',
+        uploadError: "Erreur lors de l'envoi du fichier.",
+        deletedMessage: 'Ce message a été supprimé.',
+        replyTo: 'Répondre à',
+        ephemeral: 'Les messages échangés sont éphémères et chiffrés de bout en bout. Seuls les deux correspondants peuvent les consulter. Une fois la connexion terminée, tous les messages sont supprimés pour assurer une confidentialité totale.',
+        connectionError: 'Erreur de connexion au serveur. Veuillez réessayer.',
+        enterPseudoEmpty: 'Veuillez entrer un pseudo !'
+    },
+    en: {
+        online: 'Online',
+        selectContact: 'Select a contact',
+        enterPseudo: 'Enter your username',
+        enter: 'Enter',
+        writeMessage: 'Type your message...',
+        userIsTyping: (user) => `${user} is typing...`,
+        fileTooLarge: 'File is too large. Max size: 50MB',
+        unsupportedFile: 'Unsupported file type. Only images and videos are allowed.',
+        uploadError: 'Error sending file.',
+        deletedMessage: 'This message was deleted.',
+        replyTo: 'Reply to',
+        ephemeral: 'Messages are ephemeral and end-to-end encrypted. Only the two correspondents can see them. Once the connection ends, all messages are deleted for total privacy.',
+        connectionError: 'Connection error. Please try again.',
+        enterPseudoEmpty: 'Please enter a username!'
+    },
+    es: {
+        online: 'En línea',
+        selectContact: 'Selecciona un contacto',
+        enterPseudo: 'Introduce tu usuario',
+        enter: 'Entrar',
+        writeMessage: 'Escribe tu mensaje...',
+        userIsTyping: (user) => `${user} está escribiendo...`,
+        fileTooLarge: 'El archivo es demasiado grande. Tamaño máximo: 50MB',
+        unsupportedFile: 'Tipo de archivo no soportado. Solo se permiten imágenes y videos.',
+        uploadError: 'Error al enviar el archivo.',
+        deletedMessage: 'Este mensaje fue eliminado.',
+        replyTo: 'Responder a',
+        ephemeral: 'Los mensajes son efímeros y cifrados de extremo a extremo. Solo los dos corresponsales pueden verlos. Al finalizar la conexión, todos los mensajes se eliminan para garantizar la privacidad total.',
+        connectionError: 'Error de conexión al servidor. Por favor, inténtelo de nuevo.',
+        enterPseudoEmpty: 'Por favor, ingrese un nombre de usuario!'
+    },
+    ru: {
+        online: 'Онлайн',
+        selectContact: 'Выберите контакт',
+        enterPseudo: 'Введите ваш псевдоним',
+        enter: 'Войти',
+        writeMessage: 'Напишите сообщение...',
+        userIsTyping: (user) => `${user} печатает...`,
+        fileTooLarge: 'Файл слишком большой. Максимальный размер: 50MB',
+        unsupportedFile: 'Неподдерживаемый тип файла. Разрешены только изображения и видео.',
+        uploadError: 'Ошибка при отправке файла.',
+        deletedMessage: 'Это сообщение было удалено.',
+        replyTo: 'Ответить',
+        ephemeral: 'Сообщения эфемерны и зашифрованы. Только два собеседника могут их видеть. После завершения соединения все сообщения удаляются для полной конфиденциальности.',
+        connectionError: 'Ошибка подключения к серверу. Пожалуйста, попробуйте еще раз.',
+        enterPseudoEmpty: 'Пожалуйста, введите псевдоним!'
+    },
+    zh: {
+        online: '在线',
+        selectContact: '选择联系人',
+        enterPseudo: '输入您的用户名',
+        enter: '进入',
+        writeMessage: '输入您的消息...',
+        userIsTyping: (user) => `${user} 正在输入...`,
+        fileTooLarge: '文件太大。最大大小：50MB',
+        unsupportedFile: '不支持的文件类型。只允许图片和视频。',
+        uploadError: '发送文件时出错。',
+        deletedMessage: '此消息已被删除。',
+        replyTo: '回复',
+        ephemeral: '消息是临时的并且端到端加密。只有两个通信者可以看到它们。连接结束后，所有消息都会被删除以确保完全隐私。',
+        connectionError: '连接错误。请重试。',
+        enterPseudoEmpty: '请输入用户名！'
+    }
+};
+
+let currentLang = localStorage.getItem('lang') || 'fr';
+
+function setLang(lang) {
+    currentLang = lang;
+    localStorage.setItem('lang', lang);
+    applyTranslations();
+}
+
+function applyTranslations() {
+    const t = translations[currentLang];
+    // Sidebar
+    const onlineTitle = document.querySelector('.contacts-header h2');
+    if (onlineTitle) onlineTitle.innerHTML = `<i class="fas fa-users"></i> ${t.online}`;
+    // Chat header
+    const chatTitle = document.getElementById('chatTitle');
+    if (chatTitle && !selectedContact) chatTitle.textContent = t.selectContact;
+    // Login
+    const pseudoInput = document.getElementById('pseudo');
+    if (pseudoInput) pseudoInput.placeholder = t.enterPseudo;
+    const enterBtn = document.getElementById('enterButton');
+    if (enterBtn) enterBtn.innerHTML = `<i class="fas fa-arrow-right"></i> ${t.enter}`;
+    // Message input
+    const messageInput = document.getElementById('messageInput');
+    if (messageInput) messageInput.placeholder = t.writeMessage;
+    // Intro message
+    const introMsg = document.getElementById('introMessage');
+    if (introMsg) introMsg.innerHTML = `<i class='fas fa-lock'></i> ${t.ephemeral}`;
+    // Indicateur typing (si visible)
+    const typingElem = document.getElementById('typing-indicator-chatbar');
+    if (typingElem && selectedContact) typingElem.textContent = t.userIsTyping(selectedContact);
+}
+
+// Affichage du menu de langue
+function showLanguageMenu(targetElem) {
+    let menu = document.getElementById('language-menu');
+    if (!menu) {
+        menu = document.createElement('div');
+        menu.id = 'language-menu';
+        menu.className = 'language-menu';
+        menu.innerHTML = `
+            <button data-lang="fr">Français</button>
+            <button data-lang="en">English</button>
+            <button data-lang="es">Español</button>
+            <button data-lang="ru">Русский</button>
+            <button data-lang="zh">中文</button>
+        `;
+        document.body.appendChild(menu);
+        menu.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                setLang(e.target.getAttribute('data-lang'));
+                menu.classList.remove('active');
+            }
+        });
+    }
+    // Positionnement sous l'icône cliquée
+    const rect = targetElem.getBoundingClientRect();
+    menu.style.top = (window.scrollY + rect.bottom + 4) + 'px';
+    menu.style.left = (window.scrollX + rect.left) + 'px';
+    menu.classList.add('active');
+    // Fermer si clic ailleurs
+    setTimeout(() => {
+        document.addEventListener('click', function closeMenu(e) {
+            if (!menu.contains(e.target) && e.target !== targetElem) {
+                menu.classList.remove('active');
+                document.removeEventListener('click', closeMenu);
+            }
+        });
+    }, 10);
+}
+
+// Ajout listeners sur les roues
+window.addEventListener('DOMContentLoaded', () => {
+    applyTranslations();
+    const loginSettings = document.getElementById('login-settings');
+    if (loginSettings) {
+        loginSettings.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showLanguageMenu(loginSettings);
+        });
+    }
+    const sidebarSettings = document.getElementById('sidebar-settings');
+    if (sidebarSettings) {
+        sidebarSettings.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showLanguageMenu(sidebarSettings);
+        });
+    }
 });
 
 // Affichage des contacts
@@ -95,7 +268,7 @@ function renderSingleMessage(messageData) {
         messageContentHtml = `
             <div class="message-content-row deleted-message-display">
                 <i class="fas fa-ban deleted-icon"></i>
-                <p class="deleted-text">Ce message a été supprimé.</p>
+                <p class="deleted-text">${t.deletedMessage}</p>
             </div>
         `;
         messageElement.classList.add('deleted');
@@ -227,7 +400,7 @@ function displayIntroductoryMessage() {
     introMessageElement.id = 'introMessage';
     introMessageElement.className = 'introductory-message';
     introMessageElement.innerHTML = `
-        <i class="fas fa-lock"></i> Les messages échangés sont éphémères et chiffrés de bout en bout. Seuls les deux correspondants peuvent les consulter. Une fois la connexion terminée, tous les messages sont supprimés pour assurer une confidentialité totale.
+        <i class="fas fa-lock"></i> ${t.ephemeral}
     `;
     messagesList.appendChild(introMessageElement);
     messagesList.scrollTop = messagesList.scrollHeight;
@@ -393,7 +566,7 @@ function displayReplyPreview(sender, text) {
         replyPreview.className = 'message-reply-input-preview';
         replyPreview.innerHTML = `
             <div class="reply-header">
-                Répondre à <span class="reply-sender">${sender}</span>
+                ${t.replyTo} <span class="reply-sender">${sender}</span>
                 <span class="close-reply-preview">&times;</span>
             </div>
             <p class="reply-content">${text}</p>
@@ -499,12 +672,12 @@ async function handleFileUpload(file) {
     if (!file) return;
 
     if (file.size > 50 * 1024 * 1024) {
-        alert('Le fichier est trop volumineux. Taille maximale: 50MB');
+        alert(t.fileTooLarge);
         return;
     }
 
     if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-        alert('Type de fichier non supporté. Seules les images et vidéos sont acceptées.');
+        alert(t.unsupportedFile);
         return;
     }
 
@@ -706,18 +879,14 @@ fileInput.addEventListener('change', (e) => {
 
 // Ajout de l'affichage "en train d'écrire..." sous le nom du contact et dans la zone de chat
 function showTypingIndicator(sender) {
-    // Supprimer l'ancien indicateur s'il existe
     let typingChatBarElem = document.getElementById('typing-indicator-chatbar');
     if (!typingChatBarElem) {
         typingChatBarElem = document.createElement('div');
         typingChatBarElem.id = 'typing-indicator-chatbar';
-        // Style minimal, le CSS fera le reste
         const chatMain = document.querySelector('.chat-main');
         chatMain.insertBefore(typingChatBarElem, document.getElementById('messageForm'));
     }
-    typingChatBarElem.textContent = `${sender} écrit...`;
-
-    // Masquer après 2 secondes sans nouveau signal
+    typingChatBarElem.textContent = translations[currentLang].userIsTyping(sender);
     clearTimeout(typingTimeout);
     typingTimeout = setTimeout(hideTypingIndicator, 2000);
 }
@@ -772,7 +941,7 @@ function deleteMessage(messageId, forEveryone) {
                 text: messageData.text,
                 file: messageData.file
             };
-            messageData.text = "Ce message a été supprimé";
+            messageData.text = translations[currentLang].deletedMessage;
             messageData.file = null;
         }
 
@@ -810,7 +979,7 @@ socket.on('delete_message', (data) => {
                     text: message.text,
                     file: message.file
                 };
-                message.text = "Ce message a été supprimé";
+                message.text = translations[currentLang].deletedMessage;
                 message.file = null;
                 
                 const updatedMessageElement = renderSingleMessage(message);

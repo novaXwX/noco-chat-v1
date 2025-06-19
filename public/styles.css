@@ -864,3 +864,35 @@ body {
 .message-context-menu button.restore {
     color: #2ecc71;
 }
+
+.language-menu {
+    position: absolute;
+    background: var(--bg-sidebar);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(44,62,80,0.12);
+    min-width: 140px;
+    z-index: 1000;
+    top: 36px;
+    right: 0;
+    padding: 8px 0;
+    display: none;
+}
+.language-menu.active {
+    display: block;
+}
+.language-menu button {
+    background: none;
+    border: none;
+    color: inherit;
+    width: 100%;
+    text-align: left;
+    padding: 8px 18px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.language-menu button:hover {
+    background: var(--contact-hover);
+}
