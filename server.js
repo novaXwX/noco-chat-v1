@@ -103,6 +103,23 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Ajout : gestion des événements "en train d'écrire"
+    socket.on('typing', (data) => {
+        const targetSocketId = Array.from(connectedUsers.entries())
+            .find(([_, username]) => username === data.to)?.[0];
+        if (targetSocketId) {
+            io.to(targetSocketId).emit('typing', { from: data.from });
+        }
+    });
+
+    socket.on('stop_typing', (data) => {
+        const targetSocketId = Array.from(connectedUsers.entries())
+            .find(([_, username]) => username === data.to)?.[0];
+        if (targetSocketId) {
+            io.to(targetSocketId).emit('stop_typing', { from: data.from });
+        }
+    });
+
     socket.on('delete_message', (data) => {
         const { messageId, to, from, forEveryone } = data;
         
