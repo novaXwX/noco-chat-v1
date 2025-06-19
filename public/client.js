@@ -431,6 +431,9 @@ messageForm.addEventListener('submit', (e) => {
 
         socket.emit('private_message', messageData);
         
+        // Ajout : signaler l'arrêt d'écriture après l'envoi du message
+        socket.emit('stop_typing', { from: currentUser, to: selectedContact });
+        
         if (!chatMessages.has(selectedContact)) {
             chatMessages.set(selectedContact, []);
         }
@@ -537,6 +540,9 @@ async function handleFileUpload(file) {
         };
 
         socket.emit('private_message', messageData);
+        
+        // Ajout : signaler l'arrêt d'écriture après l'envoi du message
+        socket.emit('stop_typing', { from: currentUser, to: selectedContact });
         
         if (!chatMessages.has(selectedContact)) {
             chatMessages.set(selectedContact, []);
