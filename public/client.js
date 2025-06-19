@@ -213,16 +213,6 @@ function applyTranslations() {
     // Indicateur typing (si visible)
     const typingElem = document.getElementById('typing-indicator-chatbar');
     if (typingElem && selectedContact) typingElem.textContent = t.userIsTyping(selectedContact);
-    // Accordion thème
-    const themeAccordion = document.getElementById('settingsThemeAccordion');
-    const themeList = document.getElementById('settingsThemeList');
-    if (themeAccordion && themeList) {
-        themeAccordion.addEventListener('click', () => {
-            themeAccordion.classList.toggle('open');
-            themeList.classList.toggle('open');
-            themeAccordion.querySelector('.arrow').textContent = themeList.classList.contains('open') ? '▼' : '▶';
-        });
-    }
     // Sélection du thème
     function updateThemeSelection() {
         document.querySelectorAll('#settingsThemeList button').forEach(btn => {
