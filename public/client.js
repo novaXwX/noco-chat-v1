@@ -166,6 +166,8 @@ function setLang(lang) {
     currentLang = lang;
     localStorage.setItem('lang', lang);
     applyTranslations();
+    // Met à jour la sélection visuelle
+    if (typeof updateLangSelection === 'function') updateLangSelection();
 }
 
 function applyTranslations() {
@@ -250,6 +252,7 @@ function showSettingsMenu(targetElem) {
 // Ajout listeners sur les roues
 window.addEventListener('DOMContentLoaded', () => {
     applyTranslations();
+    // Auth: roue en bas à droite
     const loginSettings = document.getElementById('login-settings');
     if (loginSettings) {
         loginSettings.addEventListener('click', (e) => {
@@ -257,6 +260,7 @@ window.addEventListener('DOMContentLoaded', () => {
             document.getElementById('settingsPage').style.display = 'flex';
         });
     }
+    // Sidebar: roue à côté de "En ligne"
     const sidebarSettings = document.getElementById('sidebar-settings');
     if (sidebarSettings) {
         sidebarSettings.addEventListener('click', (e) => {
@@ -271,12 +275,34 @@ window.addEventListener('DOMContentLoaded', () => {
             document.getElementById('settingsPage').style.display = 'none';
         });
     }
+    // Accordion langue
+    const langAccordion = document.getElementById('settingsLanguageAccordion');
+    const langList = document.getElementById('settingsLanguageList');
+    if (langAccordion && langList) {
+        langAccordion.addEventListener('click', () => {
+            langAccordion.classList.toggle('open');
+            langList.classList.toggle('open');
+            // Flèche
+            langAccordion.querySelector('.arrow').textContent = langList.classList.contains('open') ? '▼' : '▶';
+        });
+    }
     // Sélection de la langue
+    function updateLangSelection() {
+        document.querySelectorAll('#settingsLanguageList button').forEach(btn => {
+            if (btn.getAttribute('data-lang') === currentLang) {
+                btn.classList.add('selected');
+            } else {
+                btn.classList.remove('selected');
+            }
+        });
+    }
     document.querySelectorAll('#settingsLanguageList button').forEach(btn => {
         btn.addEventListener('click', () => {
             setLang(btn.getAttribute('data-lang'));
+            updateLangSelection();
         });
     });
+    updateLangSelection();
 });
 
 // Affichage des contacts

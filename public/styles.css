@@ -1014,3 +1014,41 @@ body {
 .settings-fab:hover {
     background: var(--secondary-color);
 }
+
+.settings-language-accordion {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 500;
+    padding: 8px 0;
+    user-select: none;
+}
+.settings-language-accordion .arrow {
+    margin-left: 8px;
+    font-size: 1.2em;
+    transition: transform 0.2s;
+}
+.settings-language-accordion.open .arrow {
+    transform: rotate(90deg);
+}
+.settings-language-list {
+    margin-top: 8px;
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+}
+.settings-language-list.open {
+    display: flex;
+}
+.settings-language-list button.selected {
+    background: var(--primary-color);
+    color: #fff;
+    position: relative;
+}
+.settings-language-list button.selected::after {
+    content: '✔';
+    position: absolute;
+    right: 14px;
+    font-size: 1.1em;
+}
