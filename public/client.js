@@ -706,29 +706,22 @@ fileInput.addEventListener('change', (e) => {
 
 // Ajout de l'affichage "en train d'écrire..." sous le nom du contact et dans la zone de chat
 function showTypingIndicator(sender) {
-    // Sous le nom du contact
-    let typingElem = document.getElementById('typing-indicator-header');
-    if (!typingElem) {
-        typingElem = document.createElement('div');
-        typingElem.id = 'typing-indicator-header';
-        typingElem.style.fontSize = '0.95rem';
-        typingElem.style.color = 'var(--primary-color)';
-        typingElem.style.marginTop = '2px';
-        chatHeader.appendChild(typingElem);
+    // Supprimer l'ancien indicateur s'il existe
+    let typingInputElem = document.getElementById('typing-indicator-input');
+    if (!typingInputElem) {
+        typingInputElem = document.createElement('div');
+        typingInputElem.id = 'typing-indicator-input';
+        typingInputElem.style.fontSize = '1rem';
+        typingInputElem.style.color = 'var(--primary-color)';
+        typingInputElem.style.margin = '0 10px 0 0';
+        typingInputElem.style.display = 'flex';
+        typingInputElem.style.alignItems = 'center';
+        typingInputElem.style.height = '100%';
+        // Insérer juste avant le champ de saisie dans le formulaire
+        const messageForm = document.getElementById('messageForm');
+        messageForm.insertBefore(typingInputElem, messageForm.querySelector('input'));
     }
-    typingElem.textContent = `${sender} est en train d'écrire...`;
-
-    // Dans la zone de chat
-    let typingChatElem = document.getElementById('typing-indicator-chat');
-    if (!typingChatElem) {
-        typingChatElem = document.createElement('div');
-        typingChatElem.id = 'typing-indicator-chat';
-        typingChatElem.style.fontSize = '1rem';
-        typingChatElem.style.color = 'var(--primary-color)';
-        typingChatElem.style.margin = '8px 0 0 12px';
-        messagesList.appendChild(typingChatElem);
-    }
-    typingChatElem.textContent = `${sender} écrit...`;
+    typingInputElem.textContent = `${sender} écrit...`;
 
     // Masquer après 2 secondes sans nouveau signal
     clearTimeout(typingTimeout);
@@ -736,10 +729,9 @@ function showTypingIndicator(sender) {
 }
 
 function hideTypingIndicator() {
-    const typingElem = document.getElementById('typing-indicator-header');
-    if (typingElem) typingElem.remove();
-    const typingChatElem = document.getElementById('typing-indicator-chat');
-    if (typingChatElem) typingChatElem.remove();
+    const typingInputElem = document.getElementById('typing-indicator-input');
+    if (typingInputElem) typingInputElem.remove();
+    // On ne touche plus à l'ancien header/chat
 }
 
 // Émission du signal "en train d'écrire" ou "arrêt d'écriture"
