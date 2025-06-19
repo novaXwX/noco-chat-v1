@@ -254,16 +254,29 @@ window.addEventListener('DOMContentLoaded', () => {
     if (loginSettings) {
         loginSettings.addEventListener('click', (e) => {
             e.stopPropagation();
-            showSettingsMenu(loginSettings);
+            document.getElementById('settingsPage').style.display = 'flex';
         });
     }
     const sidebarSettings = document.getElementById('sidebar-settings');
     if (sidebarSettings) {
         sidebarSettings.addEventListener('click', (e) => {
             e.stopPropagation();
-            showSettingsMenu(sidebarSettings);
+            document.getElementById('settingsPage').style.display = 'flex';
         });
     }
+    // Fermer la page de paramètres
+    const closeSettings = document.getElementById('closeSettings');
+    if (closeSettings) {
+        closeSettings.addEventListener('click', () => {
+            document.getElementById('settingsPage').style.display = 'none';
+        });
+    }
+    // Sélection de la langue
+    document.querySelectorAll('#settingsLanguageList button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            setLang(btn.getAttribute('data-lang'));
+        });
+    });
 });
 
 // Affichage des contacts
@@ -428,6 +441,10 @@ function selectContact(contact) {
 
 // Fonction pour afficher le message d'introduction
 function displayIntroductoryMessage() {
+    // Supprimer l'ancien si présent
+    const old = document.getElementById('introMessage');
+    if (old) old.remove();
+    const t = translations[currentLang];
     const introMessageElement = document.createElement('div');
     introMessageElement.id = 'introMessage';
     introMessageElement.className = 'introductory-message';
@@ -500,6 +517,9 @@ function addMessageToChat(sender, text, isOutgoing = false, replyTo = null, mess
 
     messagesList.appendChild(messageElement);
     messagesList.scrollTop = messagesList.scrollHeight;
+
+    // Supprimer le message d'intro s'il existe
+    hideIntroductoryMessage();
 }
 
 // Fonction pour afficher le menu contextuel
