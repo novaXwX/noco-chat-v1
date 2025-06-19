@@ -77,7 +77,10 @@ const translations = {
         replyTo: 'Répondre à',
         ephemeral: 'Les messages échangés sont éphémères et chiffrés de bout en bout. Seuls les deux correspondants peuvent les consulter. Une fois la connexion terminée, tous les messages sont supprimés pour assurer une confidentialité totale.',
         connectionError: 'Erreur de connexion au serveur. Veuillez réessayer.',
-        enterPseudoEmpty: 'Veuillez entrer un pseudo !'
+        enterPseudoEmpty: 'Veuillez entrer un pseudo !',
+        settings: 'Paramètres',
+        language: 'Langue',
+        searchContact: 'Rechercher un contact'
     },
     en: {
         online: 'Online',
@@ -93,7 +96,10 @@ const translations = {
         replyTo: 'Reply to',
         ephemeral: 'Messages are ephemeral and end-to-end encrypted. Only the two correspondents can see them. Once the connection ends, all messages are deleted for total privacy.',
         connectionError: 'Connection error. Please try again.',
-        enterPseudoEmpty: 'Please enter a username!'
+        enterPseudoEmpty: 'Please enter a username!',
+        settings: 'Settings',
+        language: 'Language',
+        searchContact: 'Search contact'
     },
     es: {
         online: 'En línea',
@@ -109,7 +115,10 @@ const translations = {
         replyTo: 'Responder a',
         ephemeral: 'Los mensajes son efímeros y cifrados de extremo a extremo. Solo los dos corresponsales pueden verlos. Al finalizar la conexión, todos los mensajes se eliminan para garantizar la privacidad total.',
         connectionError: 'Error de conexión al servidor. Por favor, inténtelo de nuevo.',
-        enterPseudoEmpty: 'Por favor, ingrese un nombre de usuario!'
+        enterPseudoEmpty: 'Por favor, ingrese un nombre de usuario!',
+        settings: 'Configuración',
+        language: 'Idioma',
+        searchContact: 'Buscar contacto'
     },
     ru: {
         online: 'Онлайн',
@@ -125,7 +134,10 @@ const translations = {
         replyTo: 'Ответить',
         ephemeral: 'Сообщения эфемерны и зашифрованы. Только два собеседника могут их видеть. После завершения соединения все сообщения удаляются для полной конфиденциальности.',
         connectionError: 'Ошибка подключения к серверу. Пожалуйста, попробуйте еще раз.',
-        enterPseudoEmpty: 'Пожалуйста, введите псевдоним!'
+        enterPseudoEmpty: 'Пожалуйста, введите псевдоним!',
+        settings: 'Настройки',
+        language: 'Язык',
+        searchContact: 'Поиск контакта'
     },
     zh: {
         online: '在线',
@@ -141,7 +153,10 @@ const translations = {
         replyTo: '回复',
         ephemeral: '消息是临时的并且端到端加密。只有两个通信者可以看到它们。连接结束后，所有消息都会被删除以确保完全隐私。',
         connectionError: '连接错误。请重试。',
-        enterPseudoEmpty: '请输入用户名！'
+        enterPseudoEmpty: '请输入用户名！',
+        settings: '设置',
+        language: '语言',
+        searchContact: '搜索联系人'
     }
 };
 
@@ -169,7 +184,13 @@ function applyTranslations() {
     // Message input
     const messageInput = document.getElementById('messageInput');
     if (messageInput) messageInput.placeholder = t.writeMessage;
+    // Recherche contact
+    const searchInput = document.getElementById('searchContacts');
+    if (searchInput) searchInput.placeholder = t.searchContact;
     // Intro message
+    if (selectedContact && chatMessages.has(selectedContact) && chatMessages.get(selectedContact).length === 0) {
+        displayIntroductoryMessage();
+    }
     const introMsg = document.getElementById('introMessage');
     if (introMsg) introMsg.innerHTML = `<i class='fas fa-lock'></i> ${t.ephemeral}`;
     // Indicateur typing (si visible)
@@ -177,26 +198,37 @@ function applyTranslations() {
     if (typingElem && selectedContact) typingElem.textContent = t.userIsTyping(selectedContact);
 }
 
-// Affichage du menu de langue
-function showLanguageMenu(targetElem) {
-    let menu = document.getElementById('language-menu');
+// Ajout d'une interface de paramètres dédiée
+function showSettingsMenu(targetElem) {
+    let menu = document.getElementById('settings-menu');
     if (!menu) {
         menu = document.createElement('div');
-        menu.id = 'language-menu';
-        menu.className = 'language-menu';
+        menu.id = 'settings-menu';
+        menu.className = 'settings-menu';
         menu.innerHTML = `
-            <button data-lang="fr">Français</button>
-            <button data-lang="en">English</button>
-            <button data-lang="es">Español</button>
-            <button data-lang="ru">Русский</button>
-            <button data-lang="zh">中文</button>
+            <div class="settings-title">${translations[currentLang].settings}</div>
+            <button id="open-language-menu">${translations[currentLang].language}</button>
+            <div id="language-list" class="language-list" style="display:none;">
+                <button data-lang="fr">Français</button>
+                <button data-lang="en">English</button>
+                <button data-lang="es">Español</button>
+                <button data-lang="ru">Русский</button>
+                <button data-lang="zh">中文</button>
+            </div>
         `;
         document.body.appendChild(menu);
-        menu.addEventListener('click', (e) => {
-            if (e.target.tagName === 'BUTTON') {
-                setLang(e.target.getAttribute('data-lang'));
+        // Ouvre/ferme la liste des langues
+        menu.querySelector('#open-language-menu').onclick = function(e) {
+            e.stopPropagation();
+            const list = menu.querySelector('#language-list');
+            list.style.display = list.style.display === 'block' ? 'none' : 'block';
+        };
+        // Sélection de la langue
+        menu.querySelectorAll('.language-list button').forEach(btn => {
+            btn.onclick = function(e) {
+                setLang(btn.getAttribute('data-lang'));
                 menu.classList.remove('active');
-            }
+            };
         });
     }
     // Positionnement sous l'icône cliquée
@@ -222,14 +254,14 @@ window.addEventListener('DOMContentLoaded', () => {
     if (loginSettings) {
         loginSettings.addEventListener('click', (e) => {
             e.stopPropagation();
-            showLanguageMenu(loginSettings);
+            showSettingsMenu(loginSettings);
         });
     }
     const sidebarSettings = document.getElementById('sidebar-settings');
     if (sidebarSettings) {
         sidebarSettings.addEventListener('click', (e) => {
             e.stopPropagation();
-            showLanguageMenu(sidebarSettings);
+            showSettingsMenu(sidebarSettings);
         });
     }
 });
