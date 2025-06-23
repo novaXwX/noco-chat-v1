@@ -343,22 +343,34 @@ window.addEventListener('DOMContentLoaded', () => {
     const themeAccordion = document.getElementById('settingsThemeAccordion');
     const themeList = document.getElementById('settingsThemeList');
     if (themeAccordion && themeList) {
-        themeAccordion.addEventListener('click', () => {
+        themeAccordion.addEventListener('click', (e) => {
+            e.stopPropagation();
             themeAccordion.classList.toggle('open');
             themeList.classList.toggle('open');
             themeAccordion.querySelector('.arrow').textContent = themeList.classList.contains('open') ? '▼' : '▶';
         });
+        // Sélection du thème
+        document.querySelectorAll('#settingsThemeList button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                setTheme(btn.getAttribute('data-theme'));
+                updateThemeSelection();
+                // Fermer la liste après sélection
+                themeList.classList.remove('open');
+                themeAccordion.classList.remove('open');
+                themeAccordion.querySelector('.arrow').textContent = '▶';
+            });
+        });
     }
-    // Fermer les listes si clic ailleurs
+    // Fermer les listes si clic ailleurs (un seul listener global)
     document.addEventListener('click', function closeAccordions(e) {
         const settingsPage = document.getElementById('settingsPage');
         if (settingsPage && settingsPage.style.display === 'flex') {
-            if (!langAccordion.contains(e.target) && !langList.contains(e.target)) {
+            if (langAccordion && langList && !langAccordion.contains(e.target) && !langList.contains(e.target)) {
                 langAccordion.classList.remove('open');
                 langList.classList.remove('open');
                 langAccordion.querySelector('.arrow').textContent = '▶';
             }
-            if (!themeAccordion.contains(e.target) && !themeList.contains(e.target)) {
+            if (themeAccordion && themeList && !themeAccordion.contains(e.target) && !themeList.contains(e.target)) {
                 themeAccordion.classList.remove('open');
                 themeList.classList.remove('open');
                 themeAccordion.querySelector('.arrow').textContent = '▶';
@@ -1245,7 +1257,8 @@ window.addEventListener('DOMContentLoaded', () => {
     const themeAccordion = document.getElementById('settingsThemeAccordion');
     const themeList = document.getElementById('settingsThemeList');
     if (themeAccordion && themeList) {
-        themeAccordion.addEventListener('click', () => {
+        themeAccordion.addEventListener('click', (e) => {
+            e.stopPropagation();
             themeAccordion.classList.toggle('open');
             themeList.classList.toggle('open');
             themeAccordion.querySelector('.arrow').textContent = themeList.classList.contains('open') ? '▼' : '▶';
