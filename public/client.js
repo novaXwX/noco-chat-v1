@@ -343,11 +343,16 @@ window.addEventListener('DOMContentLoaded', () => {
     const themeAccordion = document.getElementById('settingsThemeAccordion');
     const themeList = document.getElementById('settingsThemeList');
     if (themeAccordion && themeList) {
+        themeList.classList.remove('open'); // Toujours caché au départ
         themeAccordion.addEventListener('click', (e) => {
             e.stopPropagation();
-            themeAccordion.classList.toggle('open');
-            themeList.classList.toggle('open');
-            themeAccordion.querySelector('.arrow').textContent = themeList.classList.contains('open') ? '▼' : '▶';
+            // N'ouvre que si la page de paramètres est visible
+            const settingsPage = document.getElementById('settingsPage');
+            if (settingsPage && settingsPage.style.display === 'flex') {
+                themeAccordion.classList.toggle('open');
+                themeList.classList.toggle('open');
+                themeAccordion.querySelector('.arrow').textContent = themeList.classList.contains('open') ? '▼' : '▶';
+            }
         });
         // Sélection du thème
         document.querySelectorAll('#settingsThemeList button').forEach(btn => {
@@ -1257,11 +1262,27 @@ window.addEventListener('DOMContentLoaded', () => {
     const themeAccordion = document.getElementById('settingsThemeAccordion');
     const themeList = document.getElementById('settingsThemeList');
     if (themeAccordion && themeList) {
+        themeList.classList.remove('open'); // Toujours caché au départ
         themeAccordion.addEventListener('click', (e) => {
             e.stopPropagation();
-            themeAccordion.classList.toggle('open');
-            themeList.classList.toggle('open');
-            themeAccordion.querySelector('.arrow').textContent = themeList.classList.contains('open') ? '▼' : '▶';
+            // N'ouvre que si la page de paramètres est visible
+            const settingsPage = document.getElementById('settingsPage');
+            if (settingsPage && settingsPage.style.display === 'flex') {
+                themeAccordion.classList.toggle('open');
+                themeList.classList.toggle('open');
+                themeAccordion.querySelector('.arrow').textContent = themeList.classList.contains('open') ? '▼' : '▶';
+            }
+        });
+        // Sélection du thème
+        document.querySelectorAll('#settingsThemeList button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                setTheme(btn.getAttribute('data-theme'));
+                updateThemeSelection();
+                // Fermer la liste après sélection
+                themeList.classList.remove('open');
+                themeAccordion.classList.remove('open');
+                themeAccordion.querySelector('.arrow').textContent = '▶';
+            });
         });
     }
     // Sélection du thème
